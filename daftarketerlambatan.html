@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<title>Daftar Keterlambatan</title>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<style>
+body {margin:0;font-family:sans-serif;background:#ffe0e0;color:#ff5252;padding:20px;}
+h2 {text-align:center;color:#ff5252;}
+table {width:100%;border-collapse:collapse;margin-top:20px;}
+th,td {border:1px solid #ff5252;padding:8px;text-align:center;border-radius:5px;}
+th {background:#ff5252;color:#fff;}
+tr:nth-child(even) {background:#ffcdd2;}
+</style>
+</head>
+<body>
+
+<h2>Daftar Keterlambatan</h2>
+<table>
+    <thead>
+        <tr>
+            <th>Nama</th>
+            <th>Blok</th>
+            <th>Judul Buku</th>
+            <th>Inventaris</th>
+            <th>Harus Kembali</th>
+            <th>Keterlambatan (hari)</th>
+            <th>Denda (Rp)</th>
+        </tr>
+    </thead>
+    <tbody id="lateBody"></tbody>
+</table>
+
+<script>
+const firebaseConfig = {
+    apiKey: "AIzaSyDguC7UH1JUzBQu1JZX8qPJGVeb6Pc7t98",
+    authDomain: "pustakawan-26664.firebaseapp.com",
+    databaseURL: "https://pustakawan-26664-default-rtdb.firebaseio.com",
+    projectId: "pustakawan-26664",
+    storageBucket: "pustakawan-26664.firebasestorage.app",
+    messagingSenderId: "284579513964",
+    appId: "1:284579513964:web:b45f73ac287e1f49eeba49"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
+function parseTanggal(tglStr){
+    const bulan = {Januari:0,Februari:1,Maret:2,April:3,Mei:4,Juni:5,Juli:6,Agustus:7,September:8,Oktober:9,November:10,Desember:11};
+    const parts = tglStr.split(' ');
+    return new Date(parts[2], bulan[parts[1]], parts[0]);
+}
+
+function updateKeterlambatan(){
+    const tbody = document.getElementById('lateBody');
+    tbody.innerHTML = '';
+    const hariIni = new Date();
+    hariIni.setHours(0,0,0,0);
+
+    db.ref('pinjam').once('value', snapshot=>{
+        snapshot.forEach(childSnap=>{
+            const data = childSnap.val();
+            const tglKembali = parseTanggal(data.tanggal_kembali);
+            if(hariIni > tglKembali){
+                const diffDays = Math.floor((hariIni - tglKembali)/(1000*60*60*24));
+                const denda = diffDays*1000;
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${data.nama}</td>
+                    <td>${data.blok}</td>
+                    <td>${data.judul}</td>
+                    <td>${data.inventaris}</td>
+                    <td>${data.tanggal_kembali}</td>
+                    <td>${diffDays}</td>
+                    <td>${denda}</td>
+                `;
+                tbody.appendChild(tr);
+            }
+        });
+    });
+}
+
+// Update setiap 5 detik
+updateKeterlambatan();
+setInterval(updateKeterlambatan,5000);
+</script>
+
+</body>
+</html>

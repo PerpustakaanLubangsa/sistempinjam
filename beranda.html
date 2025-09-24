@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<title>Beranda Perpustakaan</title>
+<style>
+body {margin:0;font-family:sans-serif;background:#e0f7fa;color:#00bcd4;}
+.container {display:flex;height:100vh;}
+.sidebar {
+    width:150px;
+    background:#000; /* hitam pekat */
+    border-right: 3px solid #00bcd4; /* garis cyan */
+    padding:15px;
+    overflow-y:auto;
+}
+.sidebar h3 {margin-top:0;color:#00bcd4;font-size:16px;text-align:center;}
+.item {
+    padding:8px;
+    margin:5px 0;
+    border-radius:6px;
+    background:#000;
+    border:1px solid #00bcd4;
+    color:#00bcd4;
+    cursor:pointer;
+    transition:0.2s;
+    text-align:center;
+    font-size:14px;
+}
+.item:hover {background:#00bcd4;color:#000;}
+iframe {flex:1;border:none;}
+</style>
+</head>
+<body>
+
+<div class="container">
+    <div class="sidebar">
+        <h3>Menu</h3>
+        <div class="item" onclick="document.getElementById('contentFrame').src='daftarpeminjam.html'">
+            Daftar Peminjam
+        </div>
+        <div class="item" onclick="document.getElementById('contentFrame').src='daftarketerlambatan.html'">
+            Daftar Keterlambatan
+        </div>
+    </div>
+    <iframe id="contentFrame" src="daftarpeminjam.html"></iframe>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<title>Pinjam Buku</title>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<style>
+body {margin:0;font-family:sans-serif;background:#e0f7fa;display:flex;justify-content:center;align-items:center;height:100vh;color:#00bcd4;}
+.container {background:#fff;padding:40px 30px 30px 30px;border-radius:15px;box-shadow:0 8px 20px rgba(0,188,212,0.2);text-align:center;width:300px;animation:fadeIn 1s ease;}
+h2 {margin-bottom:20px;font-weight:700;color:#00bcd4;animation:slideDown 0.8s ease;}
+.input-card {margin:15px 0;}
+.input-card input {width:90%;padding:10px;border-radius:10px;border:2px solid #00bcd4;outline:none;font-size:1em;transition:0.3s;display:block;margin:0 auto;text-transform:capitalize;}
+.input-card input:focus {border-color:#00acc1;box-shadow:0 0 8px #00acc1;}
+button {width:50%;padding:10px;margin-top:20px;border-radius:10px;border:none;background:#00bcd4;color:#fff;font-weight:bold;cursor:pointer;transition:0.3s;display:block;margin:auto;}
+button:hover {background:#00acc1;transform:scale(1.05);}
+#infoPinjam {margin-top:20px;padding:15px;background:#e0f7fa;border-radius:10px;border:1px solid #00bcd4;font-weight:600;}
+@keyframes fadeIn {from {opacity:0;} to {opacity:1;}}
+@keyframes slideDown {from {transform:translateY(-20px);opacity:0;} to {transform:translateY(0);opacity:1;}}
+</style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Pinjam Buku</h2>
+    <div class="input-card"><input id="nama" placeholder="Nama"></div>
+    <div class="input-card"><input id="blok" placeholder="Blok"></div>
+    <div class="input-card"><input id="nis" type="number" placeholder="NIS"></div>
+    <div class="input-card"><input id="judul" placeholder="Judul Buku"></div>
+    <div class="input-card"><input id="inventaris" type="number" placeholder="Inventaris"></div>
+    <button onclick="simpanPinjam()">Pinjam</button>
+    <div id="infoPinjam"></div>
+</div>
+
+<script>
+const firebaseConfig = {
+    apiKey: "AIzaSyDguC7UH1JUzBQu1JZX8qPJGVeb6Pc7t98",
+    authDomain: "pustakawan-26664.firebaseapp.com",
+    databaseURL: "https://pustakawan-26664-default-rtdb.firebaseio.com",
+    projectId: "pustakawan-26664",
+    storageBucket: "pustakawan-26664.firebasestorage.app",
+    messagingSenderId: "284579513964",
+    appId: "1:284579513964:web:b45f73ac287e1f49eeba49"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+const hariIni = new Date();
+
+function formatTanggal(dateObj){
+    const bulan = ["Januari","Februari","Maret","April","Mei","Juni","Juli","Agustus","September","Oktober","November","Desember"];
+    return `${dateObj.getDate()} ${bulan[dateObj.getMonth()]} ${dateObj.getFullYear()}`;
+}
+
+function simpanPinjam() {
+    const nama = document.getElementById('nama').value;
+    const blok = document.getElementById('blok').value;
+    const nis = Number(document.getElementById('nis').value);
+    const judul = document.getElementById('judul').value;
+    const inventaris = Number(document.getElementById('inventaris').value);
+
+    if(!nama || !blok || !nis || !judul || !inventaris){
+        alert("Lengkapi semua data!");
+        return;
+    }
+
+    const tanggalKembali = new Date(hariIni);
+    tanggalKembali.setDate(hariIni.getDate()+4);
+    const tglKembaliStr = formatTanggal(tanggalKembali);
+
+    const data = {
+        nama, blok, nis, judul, inventaris,
+        tanggal: formatTanggal(hariIni),
+        tanggal_kembali: tglKembaliStr,
+        ket:"Dipinjam"
+    };
+
+    db.ref('pinjam/' + nis + "_" + inventaris).set(data)
+      .then(()=> {document.getElementById('infoPinjam').innerHTML=`Harus kembali:<br>${tglKembaliStr}`;})
+      .catch(err=> alert(err));
+}
+</script>
+
+</body>
+</html>
