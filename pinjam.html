@@ -14,10 +14,30 @@ h2 {margin-bottom:20px;font-weight:700;color:#00bcd4;animation:slideDown 0.8s ea
 .input-card input:focus {border-color:#00acc1;box-shadow:0 0 8px #00acc1;}
 button {width:50%;padding:10px;margin-top:20px;border-radius:10px;border:none;background:#00bcd4;color:#fff;font-weight:bold;cursor:pointer;transition:0.3s;display:block;margin:auto;}
 button:hover {background:#00acc1;transform:scale(1.05);}
-#infoPinjam {margin-top:20px;padding:15px;background:#e0f7fa;border-radius:10px;border:1px solid #00bcd4;font-weight:600;}
-#resetBtn {margin-top:10px;display:none;}
 @keyframes fadeIn {from {opacity:0;} to {opacity:1;}}
 @keyframes slideDown {from {transform:translateY(-20px);opacity:0;} to {transform:translateY(0);opacity:1;}}
+
+/* Popup (modal) */
+.popup-overlay {
+  position: fixed;top:0;left:0;width:100%;height:100%;
+  background:rgba(0,0,0,0.5);display:none;justify-content:center;align-items:center;z-index:1000;
+}
+.popup-box {
+  background:#fff;padding:25px;border-radius:15px;box-shadow:0 6px 15px rgba(0,0,0,0.2);
+  width:320px;text-align:center;animation:fadeIn 0.4s ease;
+}
+.popup-box h3 {margin-bottom:15px;color:#00bcd4;}
+.popup-box p {margin-bottom:20px;color:#333;}
+.popup-box .nis-focus {
+  font-size:1.8em;
+  font-weight:bold;
+  color:#d32f2f;
+  margin:8px 0;
+}
+.popup-box button {
+  background:#00bcd4;color:#fff;border:none;padding:8px 20px;border-radius:10px;cursor:pointer;font-weight:bold;
+}
+.popup-box button:hover {background:#0097a7;}
 </style>
 </head>
 <body>
@@ -29,9 +49,17 @@ button:hover {background:#00acc1;transform:scale(1.05);}
     <div class="input-card"><input id="nis" type="number" placeholder="NIS"></div>
     <div class="input-card"><input id="judul" placeholder="Judul Buku"></div>
     <div class="input-card"><input id="inventaris" type="number" placeholder="Inventaris"></div>
-    <button onclick="simpanPinjam()">Pinjam</button>
-    <button id="resetBtn" onclick="resetForm()">Isi Form Baru</button>
-    <div id="infoPinjam"></div>
+    <button onclick="mulaiPinjam()">Pinjam</button>
+</div>
+
+<!-- Popup -->
+<div id="popup" class="popup-overlay">
+  <div class="popup-box">
+    <h3 id="popupTitle"></h3>
+    <p id="popupMessage"></p>
+    <div id="popupExtra"></div>
+    <button id="popupBtn">OK</button>
+  </div>
 </div>
 
 <script>
@@ -52,36 +80,32 @@ function formatTanggal(dateObj){
     return `${dateObj.getDate()} ${bulan[dateObj.getMonth()]} ${dateObj.getFullYear()}`;
 }
 
-function simpanPinjam() {
-    const nama = document.getElementById('nama').value;
-    const blok = document.getElementById('blok').value;
-    const nis = Number(document.getElementById('nis').value);
-    const judul = document.getElementById('judul').value;
-    const inventaris = Number(document.getElementById('inventaris').value);
+// fungsi popup manual
+function showPopup(title, message, options = {}) {
+    document.getElementById("popupTitle").innerText = title;
+    document.getElementById("popupMessage").innerText = message;
+    const extra = document.getElementById("popupExtra");
+    extra.innerHTML = options.extraHtml || "";
+    const overlay = document.getElementById("popup");
+    const btn = document.getElementById("popupBtn");
 
-    if(!nama || !blok || !nis || !judul || !inventaris){
-        alert("Lengkapi semua data!");
-        return;
+    overlay.style.display = "flex";
+    btn.focus();
+
+    function closePopup() {
+        overlay.style.display = "none";
+        btn.removeEventListener("click", closePopup);
+        document.removeEventListener("keydown", keyHandler);
+        if (options.callback) options.callback();
+    }
+    function keyHandler(e) {
+        if (e.key === "Enter") {
+            closePopup();
+        }
     }
 
-    const hariIni = new Date();
-    const tanggalKembali = new Date(hariIni);
-    tanggalKembali.setDate(hariIni.getDate()+4);
-    const tglKembaliStr = formatTanggal(tanggalKembali);
-
-    const data = {
-        nama, blok, nis, judul, inventaris,
-        tanggal: formatTanggal(hariIni),
-        tanggal_kembali: tglKembaliStr,
-        ket:"Dipinjam"
-    };
-
-    db.ref('pinjam/' + nis + "_" + inventaris).set(data)
-      .then(()=> {
-          document.getElementById('infoPinjam').innerHTML = `Harus kembali:<br>${tglKembaliStr}`;
-          document.getElementById('resetBtn').style.display = 'block'; // tampilkan tombol konfirmasi
-      })
-      .catch(err=> alert(err));
+    btn.addEventListener("click", closePopup);
+    document.addEventListener("keydown", keyHandler);
 }
 
 function resetForm(){
@@ -90,8 +114,62 @@ function resetForm(){
     document.getElementById('nis').value = '';
     document.getElementById('judul').value = '';
     document.getElementById('inventaris').value = '';
-    document.getElementById('infoPinjam').innerHTML = '';
-    document.getElementById('resetBtn').style.display = 'none'; // sembunyikan tombol lagi
+}
+
+function mulaiPinjam(){
+    const nama = document.getElementById('nama').value;
+    const blok = document.getElementById('blok').value;
+    const nis = Number(document.getElementById('nis').value);
+    const judul = document.getElementById('judul').value;
+    const inventaris = Number(document.getElementById('inventaris').value);
+
+    if(!nama || !blok || !nis || !judul || !inventaris){
+        showPopup("Peringatan", "Lengkapi semua data!");
+        return;
+    }
+
+    // popup konfirmasi nis
+    showPopup("Konfirmasi", "Apakah NIS\nbenar untuk peminjam ini?", {
+        extraHtml: `<div class="nis-focus">${nis}</div>`,
+        callback: () => cekDanSimpan(nama, blok, nis, judul, inventaris)
+    });
+}
+
+function cekDanSimpan(nama, blok, nis, judul, inventaris){
+    db.ref("pinjam").once("value", snapshot => {
+        let masihPinjam = null;
+        snapshot.forEach(child => {
+            const data = child.val();
+            if (data.nis === nis && data.ket === "Dipinjam") {
+                masihPinjam = data;
+            }
+        });
+
+        if (masihPinjam) {
+            showPopup("Tidak Bisa Meminjam", 
+              `NIS ${nis} masih meminjam:\n"${masihPinjam.judul}"`);
+            return;
+        }
+
+        // kalau aman, simpan data
+        const hariIni = new Date();
+        const tanggalKembali = new Date(hariIni);
+        tanggalKembali.setDate(hariIni.getDate()+4);
+        const tglKembaliStr = formatTanggal(tanggalKembali);
+
+        const dataBaru = {
+            nama, blok, nis, judul, inventaris,
+            tanggal: formatTanggal(hariIni),
+            tanggal_kembali: tglKembaliStr,
+            ket:"Dipinjam"
+        };
+
+        db.ref('pinjam/' + nis + "_" + inventaris).set(dataBaru)
+          .then(()=> {
+              showPopup("Berhasil", `Buku ini harus dikembalikan:\n${tglKembaliStr}`, { callback: resetForm });
+          })
+          .catch(err=> showPopup("Error", err.message));
+    });
 }
 </script>
 

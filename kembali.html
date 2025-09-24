@@ -14,10 +14,29 @@ h2 {margin-bottom:20px;font-weight:700;color:#00bcd4;animation:slideDown 0.8s ea
 .input-card input:focus {border-color:#00acc1;box-shadow:0 0 8px #00acc1;}
 button {width:50%;padding:10px;margin-top:20px;border-radius:10px;border:none;background:#00bcd4;color:#fff;font-weight:bold;cursor:pointer;transition:0.3s;display:block;margin:auto;}
 button:hover {background:#00acc1;transform:scale(1.05);}
-#infoKembali {margin-top:20px;padding:15px;background:#e0f7fa;border-radius:10px;border:1px solid #00bcd4;font-weight:600;text-align:left;}
-#resetBtn {margin-top:10px;display:none;width:60%;}
 @keyframes fadeIn {from {opacity:0;} to {opacity:1;}}
 @keyframes slideDown {from {transform:translateY(-20px);opacity:0;} to {transform:translateY(0);opacity:1;}}
+
+/* Pop Up */
+.popup-overlay {
+    position: fixed; top:0; left:0; width:100%; height:100%;
+    background: rgba(0,0,0,0.5); display:flex;
+    justify-content:center; align-items:center;
+    z-index: 1000; display:none;
+}
+.popup {
+    background:#fff; padding:20px 25px; border-radius:15px;
+    width:320px; text-align:left; box-shadow:0 5px 15px rgba(0,0,0,0.3);
+    animation:fadeIn 0.3s ease;
+}
+.popup h3 {margin:0 0 15px;font-size:1.2em;color:#00bcd4;text-align:center;}
+.popup p {margin-bottom:20px;color:#333;white-space:pre-line;}
+.popup button {
+    width:80px; margin:0 10px; padding:8px;
+    border:none; border-radius:8px; font-weight:bold; cursor:pointer;
+}
+.ok-btn {background:#00bcd4;color:#fff;}
+.ok-btn:hover {background:#00acc1;}
 </style>
 </head>
 <body>
@@ -26,8 +45,15 @@ button:hover {background:#00acc1;transform:scale(1.05);}
     <h2>Kembalikan Buku</h2>
     <div class="input-card"><input id="inventaris" type="number" placeholder="Inventaris"></div>
     <button onclick="kembalikanBuku()">Kembalikan</button>
-    <button id="resetBtn" onclick="resetForm()">Transaksi Baru</button>
-    <div id="infoKembali"></div>
+</div>
+
+<!-- POPUP -->
+<div id="popupOverlay" class="popup-overlay">
+  <div class="popup" id="popupBox">
+    <h3 id="popupTitle"></h3>
+    <p id="popupMessage"></p>
+    <div id="popupButtons" style="text-align:center;"></div>
+  </div>
 </div>
 
 <script>
@@ -43,6 +69,36 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
+function showPopup(title, message, buttons=[{text:"OK",action:closePopup}]) {
+    document.getElementById('popupTitle').innerHTML = title;
+    document.getElementById('popupMessage').innerHTML = message;
+    const btnContainer = document.getElementById('popupButtons');
+    btnContainer.innerHTML = '';
+    buttons.forEach((btn, idx)=>{
+        const b = document.createElement('button');
+        b.textContent = btn.text;
+        b.className = "ok-btn";
+        b.onclick = ()=>{ btn.action(); };
+        btnContainer.appendChild(b);
+        if(idx===0) b.focus();
+    });
+    document.getElementById('popupOverlay').style.display='flex';
+
+    document.onkeydown = function(e){
+        if(e.key==="Enter"){
+            buttons[0].action();
+        }
+    };
+}
+function closePopup(){ 
+    document.getElementById('popupOverlay').style.display='none'; 
+    document.onkeydown = null;
+}
+function resetForm(){
+    document.getElementById('inventaris').value='';
+    document.getElementById('inventaris').focus();
+}
+
 function parseTanggal(tglStr) {
     const bulan = {Januari:0,Februari:1,Maret:2,April:3,Mei:4,Juni:5,Juli:6,Agustus:7,September:8,Oktober:9,November:10,Desember:11};
     const parts = tglStr.split(' ');
@@ -51,7 +107,10 @@ function parseTanggal(tglStr) {
 
 function kembalikanBuku() {
     const inventaris = Number(document.getElementById('inventaris').value);
-    if(!inventaris){ alert("Masukkan nomor inventaris!"); return; }
+    if(!inventaris){ 
+        showPopup("Peringatan","Masukkan nomor inventaris!"); 
+        return; 
+    }
 
     db.ref('pinjam').orderByChild('inventaris').equalTo(inventaris).once('value', snapshot=>{
         if(snapshot.exists()){
@@ -61,38 +120,36 @@ function kembalikanBuku() {
                 const hariIni = new Date();
                 hariIni.setHours(0,0,0,0);
                 tanggalKembali.setHours(0,0,0,0);
-                let info = `<b>Buku berhasil dikembalikan</b><br><br>`;
-                info += `<b>Nama:</b> ${data.nama}<br>`;
-                info += `<b>Blok:</b> ${data.blok}<br>`;
-                info += `<b>NIS:</b> ${data.nis}<br>`;
-                info += `<b>Judul Buku:</b> ${data.judul}<br>`;
-                info += `<b>Inventaris:</b> ${data.inventaris}<br>`;
-                info += `<b>Tanggal Pinjam:</b> ${data.tanggal}<br>`;
-                info += `<b>Harus Dikembalikan:</b> ${data.tanggal_kembali}<br>`;
+                let info = `Buku berhasil dikembalikan\n\n`;
+                info += `Nama: ${data.nama}\n`;
+                info += `Blok: ${data.blok}\n`;
+                info += `NIS: ${data.nis}\n`;
+                info += `Judul Buku: ${data.judul}\n`;
+                info += `Inventaris: ${data.inventaris}\n`;
+                info += `Tanggal Pinjam: ${data.tanggal}\n`;
+                info += `Harus Dikembalikan: ${data.tanggal_kembali}\n`;
 
                 if(hariIni > tanggalKembali){
                     const diffTime = hariIni - tanggalKembali;
                     const diffDays = Math.floor(diffTime / (1000*60*60*24));
                     const denda = diffDays * 1000;
-                    info += `<b>Keterlambatan:</b> ${diffDays} hari<br>`;
-                    info += `<b>Denda:</b> Rp${denda}<br>`;
+                    info += `Keterlambatan: ${diffDays} hari\n`;
+                    info += `Denda: Rp${denda}\n`;
                 }
 
-                document.getElementById('infoKembali').innerHTML = info;
-                document.getElementById('resetBtn').style.display = 'block'; // tampilkan tombol transaksi baru
-                childSnap.ref.remove();
+                showPopup("Informasi", info, [{
+                    text:"OK",
+                    action:()=>{ closePopup(); resetForm(); childSnap.ref.remove(); }
+                }]);
             });
         } else {
-            alert("Data inventaris tidak ditemukan atau sudah dikembalikan!");
+            showPopup("Gagal","Data inventaris tidak ditemukan atau sudah dikembalikan!");
         }
     });
 }
 
-function resetForm(){
-    document.getElementById('inventaris').value = '';
-    document.getElementById('infoKembali').innerHTML = '';
-    document.getElementById('resetBtn').style.display = 'none';
-}
+// auto fokus saat halaman dibuka
+window.onload = ()=>{ document.getElementById('inventaris').focus(); };
 </script>
 
 </body>
