@@ -15,6 +15,7 @@ h2 {margin-bottom:20px;font-weight:700;color:#00bcd4;animation:slideDown 0.8s ea
 button {width:50%;padding:10px;margin-top:20px;border-radius:10px;border:none;background:#00bcd4;color:#fff;font-weight:bold;cursor:pointer;transition:0.3s;display:block;margin:auto;}
 button:hover {background:#00acc1;transform:scale(1.05);}
 #infoPinjam {margin-top:20px;padding:15px;background:#e0f7fa;border-radius:10px;border:1px solid #00bcd4;font-weight:600;}
+#resetBtn {margin-top:10px;display:none;}
 @keyframes fadeIn {from {opacity:0;} to {opacity:1;}}
 @keyframes slideDown {from {transform:translateY(-20px);opacity:0;} to {transform:translateY(0);opacity:1;}}
 </style>
@@ -29,6 +30,7 @@ button:hover {background:#00acc1;transform:scale(1.05);}
     <div class="input-card"><input id="judul" placeholder="Judul Buku"></div>
     <div class="input-card"><input id="inventaris" type="number" placeholder="Inventaris"></div>
     <button onclick="simpanPinjam()">Pinjam</button>
+    <button id="resetBtn" onclick="resetForm()">Isi Form Baru</button>
     <div id="infoPinjam"></div>
 </div>
 
@@ -44,7 +46,6 @@ const firebaseConfig = {
 };
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
-const hariIni = new Date();
 
 function formatTanggal(dateObj){
     const bulan = ["Januari","Februari","Maret","April","Mei","Juni","Juli","Agustus","September","Oktober","November","Desember"];
@@ -63,6 +64,7 @@ function simpanPinjam() {
         return;
     }
 
+    const hariIni = new Date();
     const tanggalKembali = new Date(hariIni);
     tanggalKembali.setDate(hariIni.getDate()+4);
     const tglKembaliStr = formatTanggal(tanggalKembali);
@@ -75,8 +77,21 @@ function simpanPinjam() {
     };
 
     db.ref('pinjam/' + nis + "_" + inventaris).set(data)
-      .then(()=> {document.getElementById('infoPinjam').innerHTML=`Harus kembali:<br>${tglKembaliStr}`;})
+      .then(()=> {
+          document.getElementById('infoPinjam').innerHTML = `Harus kembali:<br>${tglKembaliStr}`;
+          document.getElementById('resetBtn').style.display = 'block'; // tampilkan tombol konfirmasi
+      })
       .catch(err=> alert(err));
+}
+
+function resetForm(){
+    document.getElementById('nama').value = '';
+    document.getElementById('blok').value = '';
+    document.getElementById('nis').value = '';
+    document.getElementById('judul').value = '';
+    document.getElementById('inventaris').value = '';
+    document.getElementById('infoPinjam').innerHTML = '';
+    document.getElementById('resetBtn').style.display = 'none'; // sembunyikan tombol lagi
 }
 </script>
 
