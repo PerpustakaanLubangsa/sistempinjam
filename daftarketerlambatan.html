@@ -6,17 +6,42 @@
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 <style>
-body {margin:0;font-family:sans-serif;background:#ffe0e0;color:#ff5252;padding:20px;}
-h2 {text-align:center;color:#ff5252;}
-table {width:100%;border-collapse:collapse;margin-top:20px;}
-th,td {border:1px solid #ff5252;padding:8px;text-align:center;border-radius:5px;}
-th {background:#ff5252;color:#fff;}
-tr:nth-child(even) {background:#ffcdd2;}
+    body {
+        margin: 0;
+        font-family: sans-serif;
+        background: #e0f7fa;
+        color: #006064;
+        padding: 20px;
+    }
+    h2 {
+        text-align: center;
+        color: #004d40;
+    }
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 20px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        border-radius: 8px;
+        overflow: hidden;
+    }
+    th, td {
+        border: 1px solid #00bcd4;
+        padding: 10px;
+        text-align: center;
+    }
+    th {
+        background: #00bcd4;
+        color: #fff;
+    }
+    tr:nth-child(even) {
+        background: #b2ebf2;
+    }
 </style>
 </head>
 <body>
 
-<h2>Daftar Keterlambatan</h2>
+<h2>📕 Daftar Keterlambatan</h2>
 <table>
     <thead>
         <tr>
@@ -26,7 +51,7 @@ tr:nth-child(even) {background:#ffcdd2;}
             <th>Inventaris</th>
             <th>Harus Kembali</th>
             <th>Keterlambatan (hari)</th>
-            <th>Denda (Rp)</th>
+            <th>Denda</th>
         </tr>
     </thead>
     <tbody id="lateBody"></tbody>
@@ -38,41 +63,53 @@ const firebaseConfig = {
     authDomain: "pustakawan-26664.firebaseapp.com",
     databaseURL: "https://pustakawan-26664-default-rtdb.firebaseio.com",
     projectId: "pustakawan-26664",
-    storageBucket: "pustakawan-26664.firebasestorage.app",
+    storageBucket: "pustakawan-26664.appspot.com",
     messagingSenderId: "284579513964",
     appId: "1:284579513964:web:b45f73ac287e1f49eeba49"
 };
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
+// Konversi string tanggal -> Date object
 function parseTanggal(tglStr){
-    const bulan = {Januari:0,Februari:1,Maret:2,April:3,Mei:4,Juni:5,Juli:6,Agustus:7,September:8,Oktober:9,November:10,Desember:11};
+    if(!tglStr) return null;
+    const bulan = {
+        Januari:0, Februari:1, Maret:2, April:3, Mei:4, Juni:5,
+        Juli:6, Agustus:7, September:8, Oktober:9, November:10, Desember:11
+    };
     const parts = tglStr.split(' ');
+    if(parts.length !== 3 || !bulan.hasOwnProperty(parts[1])) return null;
     return new Date(parts[2], bulan[parts[1]], parts[0]);
+}
+
+// Format angka ke rupiah
+function formatRupiah(num) {
+    return "Rp " + num.toLocaleString("id-ID");
 }
 
 function updateKeterlambatan(){
     const tbody = document.getElementById('lateBody');
-    tbody.innerHTML = '';
-    const hariIni = new Date();
-    hariIni.setHours(0,0,0,0);
+    db.ref('pinjam').on('value', snapshot=>{
+        tbody.innerHTML = '';
+        const hariIni = new Date();
+        hariIni.setHours(0,0,0,0);
 
-    db.ref('pinjam').once('value', snapshot=>{
         snapshot.forEach(childSnap=>{
             const data = childSnap.val();
             const tglKembali = parseTanggal(data.tanggal_kembali);
-            if(hariIni > tglKembali){
+
+            if(tglKembali && hariIni > tglKembali){
                 const diffDays = Math.floor((hariIni - tglKembali)/(1000*60*60*24));
-                const denda = diffDays*1000;
+                const denda = diffDays * 1000;
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
-                    <td>${data.nama}</td>
-                    <td>${data.blok}</td>
-                    <td>${data.judul}</td>
-                    <td>${data.inventaris}</td>
-                    <td>${data.tanggal_kembali}</td>
+                    <td>${data.nama || '-'}</td>
+                    <td>${data.blok || '-'}</td>
+                    <td>${data.judul || '-'}</td>
+                    <td>${data.inventaris || '-'}</td>
+                    <td>${data.tanggal_kembali || '-'}</td>
                     <td>${diffDays}</td>
-                    <td>${denda}</td>
+                    <td>${formatRupiah(denda)}</td>
                 `;
                 tbody.appendChild(tr);
             }
@@ -80,9 +117,7 @@ function updateKeterlambatan(){
     });
 }
 
-// Update setiap 5 detik
 updateKeterlambatan();
-setInterval(updateKeterlambatan,5000);
 </script>
 
 </body>

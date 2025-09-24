@@ -6,17 +6,42 @@
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 <style>
-body {margin:0;font-family:sans-serif;background:#e0f7fa;color:#00bcd4;padding:20px;}
-h2 {text-align:center;color:#00bcd4;}
-table {width:100%;border-collapse:collapse;margin-top:20px;}
-th,td {border:1px solid #00bcd4;padding:8px;text-align:center;border-radius:5px;}
-th {background:#00bcd4;color:#fff;}
-tr:nth-child(even) {background:#b2ebf2;}
+    body {
+        margin: 0;
+        font-family: sans-serif;
+        background: #e0f7fa;
+        color: #006064;
+        padding: 20px;
+    }
+    h2 {
+        text-align: center;
+        color: #004d40;
+    }
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 20px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        border-radius: 8px;
+        overflow: hidden;
+    }
+    th, td {
+        border: 1px solid #00bcd4;
+        padding: 10px;
+        text-align: center;
+    }
+    th {
+        background: #00bcd4;
+        color: #fff;
+    }
+    tr:nth-child(even) {
+        background: #b2ebf2;
+    }
 </style>
 </head>
 <body>
 
-<h2>Daftar Peminjam</h2>
+<h2>📚 Daftar Peminjam</h2>
 <table>
     <thead>
         <tr>
@@ -33,42 +58,40 @@ tr:nth-child(even) {background:#b2ebf2;}
 </table>
 
 <script>
-const firebaseConfig = {
-    apiKey: "AIzaSyDguC7UH1JUzBQu1JZX8qPJGVeb6Pc7t98",
-    authDomain: "pustakawan-26664.firebaseapp.com",
-    databaseURL: "https://pustakawan-26664-default-rtdb.firebaseio.com",
-    projectId: "pustakawan-26664",
-    storageBucket: "pustakawan-26664.firebasestorage.app",
-    messagingSenderId: "284579513964",
-    appId: "1:284579513964:web:b45f73ac287e1f49eeba49"
-};
-firebase.initializeApp(firebaseConfig);
-const db = firebase.database();
+    const firebaseConfig = {
+        apiKey: "AIzaSyDguC7UH1JUzBQu1JZX8qPJGVeb6Pc7t98",
+        authDomain: "pustakawan-26664.firebaseapp.com",
+        databaseURL: "https://pustakawan-26664-default-rtdb.firebaseio.com",
+        projectId: "pustakawan-26664",
+        storageBucket: "pustakawan-26664.appspot.com",
+        messagingSenderId: "284579513964",
+        appId: "1:284579513964:web:b45f73ac287e1f49eeba49"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
 
-function updatePeminjam(){
-    const tbody = document.getElementById('peminjamBody');
-    tbody.innerHTML = '';
-    db.ref('pinjam').once('value', snapshot=>{
-        snapshot.forEach(childSnap=>{
-            const data = childSnap.val();
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
-                <td>${data.nama}</td>
-                <td>${data.blok}</td>
-                <td>${data.judul}</td>
-                <td>${data.nis}</td>
-                <td>${data.inventaris}</td>
-                <td>${data.tanggal}</td>
-                <td>${data.tanggal_kembali}</td>
-            `;
-            tbody.appendChild(tr);
+    function loadPeminjam() {
+        const tbody = document.getElementById('peminjamBody');
+        db.ref('pinjam').on('value', snapshot => {
+            tbody.innerHTML = ''; // reset isi tabel
+            snapshot.forEach(childSnap => {
+                const data = childSnap.val();
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${data.nama || '-'}</td>
+                    <td>${data.blok || '-'}</td>
+                    <td>${data.judul || '-'}</td>
+                    <td>${data.nis || '-'}</td>
+                    <td>${data.inventaris || '-'}</td>
+                    <td>${data.tanggal || '-'}</td>
+                    <td>${data.tanggal_kembali || '-'}</td>
+                `;
+                tbody.appendChild(tr);
+            });
         });
-    });
-}
+    }
 
-// Update setiap 5 detik
-updatePeminjam();
-setInterval(updatePeminjam,5000);
+    loadPeminjam();
 </script>
 
 </body>
