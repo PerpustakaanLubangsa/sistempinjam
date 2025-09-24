@@ -7,14 +7,15 @@
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 <style>
 body {margin:0;font-family:sans-serif;background:#e0f7fa;display:flex;justify-content:center;align-items:center;height:100vh;color:#00bcd4;}
-.container {background:#fff;padding:40px 30px 30px 30px;border-radius:15px;box-shadow:0 8px 20px rgba(0,188,212,0.2);text-align:center;width:300px;animation:fadeIn 1s ease;}
+.container {background:#fff;padding:40px 30px 30px 30px;border-radius:15px;box-shadow:0 8px 20px rgba(0,188,212,0.2);text-align:center;width:350px;animation:fadeIn 1s ease;}
 h2 {margin-bottom:20px;font-weight:700;color:#00bcd4;animation:slideDown 0.8s ease;}
 .input-card {margin:15px 0;}
 .input-card input {width:90%;padding:10px;border-radius:10px;border:2px solid #00bcd4;outline:none;font-size:1em;transition:0.3s;display:block;margin:0 auto;}
 .input-card input:focus {border-color:#00acc1;box-shadow:0 0 8px #00acc1;}
 button {width:50%;padding:10px;margin-top:20px;border-radius:10px;border:none;background:#00bcd4;color:#fff;font-weight:bold;cursor:pointer;transition:0.3s;display:block;margin:auto;}
 button:hover {background:#00acc1;transform:scale(1.05);}
-#infoKembali {margin-top:20px;padding:15px;background:#e0f7fa;border-radius:10px;border:1px solid #00bcd4;font-weight:600;}
+#infoKembali {margin-top:20px;padding:15px;background:#e0f7fa;border-radius:10px;border:1px solid #00bcd4;font-weight:600;text-align:left;}
+#resetBtn {margin-top:10px;display:none;width:60%;}
 @keyframes fadeIn {from {opacity:0;} to {opacity:1;}}
 @keyframes slideDown {from {transform:translateY(-20px);opacity:0;} to {transform:translateY(0);opacity:1;}}
 </style>
@@ -25,6 +26,7 @@ button:hover {background:#00acc1;transform:scale(1.05);}
     <h2>Kembalikan Buku</h2>
     <div class="input-card"><input id="inventaris" type="number" placeholder="Inventaris"></div>
     <button onclick="kembalikanBuku()">Kembalikan</button>
+    <button id="resetBtn" onclick="resetForm()">Transaksi Baru</button>
     <div id="infoKembali"></div>
 </div>
 
@@ -42,7 +44,6 @@ firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
 function parseTanggal(tglStr) {
-    // Format "24 September 2025"
     const bulan = {Januari:0,Februari:1,Maret:2,April:3,Mei:4,Juni:5,Juli:6,Agustus:7,September:8,Oktober:9,November:10,Desember:11};
     const parts = tglStr.split(' ');
     return new Date(parts[2], bulan[parts[1]], parts[0]);
@@ -60,22 +61,37 @@ function kembalikanBuku() {
                 const hariIni = new Date();
                 hariIni.setHours(0,0,0,0);
                 tanggalKembali.setHours(0,0,0,0);
-                let info = "Buku berhasil dikembalikan";
+                let info = `<b>Buku berhasil dikembalikan</b><br><br>`;
+                info += `<b>Nama:</b> ${data.nama}<br>`;
+                info += `<b>Blok:</b> ${data.blok}<br>`;
+                info += `<b>NIS:</b> ${data.nis}<br>`;
+                info += `<b>Judul Buku:</b> ${data.judul}<br>`;
+                info += `<b>Inventaris:</b> ${data.inventaris}<br>`;
+                info += `<b>Tanggal Pinjam:</b> ${data.tanggal}<br>`;
+                info += `<b>Harus Dikembalikan:</b> ${data.tanggal_kembali}<br>`;
 
                 if(hariIni > tanggalKembali){
                     const diffTime = hariIni - tanggalKembali;
                     const diffDays = Math.floor(diffTime / (1000*60*60*24));
                     const denda = diffDays * 1000;
-                    info += `<br>Keterlambatan: ${diffDays} hari.<br>Denda: Rp${denda}`;
+                    info += `<b>Keterlambatan:</b> ${diffDays} hari<br>`;
+                    info += `<b>Denda:</b> Rp${denda}<br>`;
                 }
 
                 document.getElementById('infoKembali').innerHTML = info;
+                document.getElementById('resetBtn').style.display = 'block'; // tampilkan tombol transaksi baru
                 childSnap.ref.remove();
             });
         } else {
             alert("Data inventaris tidak ditemukan atau sudah dikembalikan!");
         }
     });
+}
+
+function resetForm(){
+    document.getElementById('inventaris').value = '';
+    document.getElementById('infoKembali').innerHTML = '';
+    document.getElementById('resetBtn').style.display = 'none';
 }
 </script>
 
