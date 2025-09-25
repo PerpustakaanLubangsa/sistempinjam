@@ -2,176 +2,308 @@
 <html lang="id">
 <head>
 <meta charset="UTF-8">
-<title>Pinjam Buku</title>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<title>Sistem Peminjaman Buku</title>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
 <style>
-body {margin:0;font-family:sans-serif;background:#e0f7fa;display:flex;justify-content:center;align-items:center;height:100vh;color:#00bcd4;}
-.container {background:#fff;padding:40px 30px 30px 30px;border-radius:15px;box-shadow:0 8px 20px rgba(0,188,212,0.2);text-align:center;width:300px;animation:fadeIn 1s ease;}
-h2 {margin-bottom:20px;font-weight:700;color:#00bcd4;animation:slideDown 0.8s ease;}
-.input-card {margin:15px 0;}
-.input-card input {width:90%;padding:10px;border-radius:10px;border:2px solid #00bcd4;outline:none;font-size:1em;transition:0.3s;display:block;margin:0 auto;text-transform:capitalize;}
-.input-card input:focus {border-color:#00acc1;box-shadow:0 0 8px #00acc1;}
-button {width:50%;padding:10px;margin-top:20px;border-radius:10px;border:none;background:#00bcd4;color:#fff;font-weight:bold;cursor:pointer;transition:0.3s;display:block;margin:auto;}
-button:hover {background:#00acc1;transform:scale(1.05);}
-@keyframes fadeIn {from {opacity:0;} to {opacity:1;}}
-@keyframes slideDown {from {transform:translateY(-20px);opacity:0;} to {transform:translateY(0);opacity:1;}}
-
-/* Popup (modal) */
-.popup-overlay {
-  position: fixed;top:0;left:0;width:100%;height:100%;
-  background:rgba(0,0,0,0.5);display:none;justify-content:center;align-items:center;z-index:1000;
+body {
+  font-family: sans-serif;
+  background: #e0f7fa;
+  margin:0;
+  padding:20px;
+  color:#006064;
 }
-.popup-box {
-  background:#fff;padding:25px;border-radius:15px;box-shadow:0 6px 15px rgba(0,0,0,0.2);
-  width:320px;text-align:center;animation:fadeIn 0.4s ease;
+.container{
+  max-width:800px;
+  margin:auto;
+  background:#fff;
+  padding:20px;
+  border-radius:10px;
+  box-shadow:0 0 8px rgba(0,0,0,0.1);
 }
-.popup-box h3 {margin-bottom:15px;color:#00bcd4;}
-.popup-box p {margin-bottom:20px;color:#333;}
-.popup-box .nis-focus {
-  font-size:1.8em;
+input, button{
+  padding:8px;
+  margin:5px 0;
+  border-radius:6px;
+  border:1px solid #00bcd4;
+}
+button{
+  cursor:pointer;
+  background:#00bcd4;
+  color:#fff;
+  border:none;
+}
+button:hover{background:#0097a7;}
+#profil{
+  margin:15px 0;
+  padding:10px;
+  background:#e0f2f1;
+  border-radius:6px;
+}
+.tabs{display:flex;margin-top:10px;border-bottom:2px solid #00bcd4;}
+.tab{
+  flex:1;text-align:center;padding:10px;cursor:pointer;background:#b2ebf2;
+}
+.tab.active{background:#00bcd4;color:#fff;}
+.tab-content{display:none;margin-top:10px;}
+.tab-content.active{display:block;}
+table{width:100%;border-collapse:collapse;margin-top:10px;}
+th,td{border:1px solid #00bcd4;padding:6px;text-align:center;}
+.action-btn{padding:4px 8px;border-radius:6px;border:none;cursor:pointer;}
+.kembali{background:#f44336;color:#fff;}
+.kembali:hover{background:#c62828;}
+.loading{
+  display:none;
+  text-align:center;
+  margin:10px 0;
   font-weight:bold;
-  color:#d32f2f;
-  margin:8px 0;
 }
-.popup-box button {
-  background:#00bcd4;color:#fff;border:none;padding:8px 20px;border-radius:10px;cursor:pointer;font-weight:bold;
+.popup-overlay{
+  display:none;
+  position:fixed;top:0;left:0;width:100%;height:100%;
+  background:rgba(0,0,0,0.6);
+  justify-content:center;align-items:center;
 }
-.popup-box button:hover {background:#0097a7;}
+.popup{
+  background:#fff;
+  padding:20px;
+  border-radius:10px;
+  width:300px;
+  text-align:center;
+}
+.popup button{
+  margin-top:10px;
+  width:80px;
+}
 </style>
 </head>
 <body>
-
 <div class="container">
-    <h2>Pinjam Buku</h2>
-    <div class="input-card"><input id="nama" placeholder="Nama"></div>
-    <div class="input-card"><input id="blok" placeholder="Blok"></div>
-    <div class="input-card"><input id="nis" type="number" placeholder="NIS"></div>
-    <div class="input-card"><input id="judul" placeholder="Judul Buku"></div>
-    <div class="input-card"><input id="inventaris" type="number" placeholder="Inventaris"></div>
-    <button onclick="mulaiPinjam()">Pinjam</button>
+  <h2>📚 Peminjaman Buku</h2>
+
+  <!-- Input NIS -->
+  <label>NIS Anggota</label><br>
+  <input type="text" id="nisInput" placeholder="Masukkan NIS"><br>
+  <button id="cekBtn">Cek</button>
+
+  <!-- Loading -->
+  <div id="loading" class="loading">Sedang memuat...</div>
+
+  <!-- Profil -->
+  <div id="profil" style="display:none;"></div>
+
+  <!-- Tabs -->
+  <div id="tabs" style="display:none;">
+    <div class="tabs">
+      <div class="tab active" onclick="bukaTab('dipinjam')">Buku Dipinjam</div>
+      <div class="tab" onclick="bukaTab('pinjam')">Pinjam Buku</div>
+    </div>
+
+    <!-- Buku Dipinjam -->
+    <div id="dipinjam" class="tab-content active">
+      <table>
+        <thead>
+          <tr>
+            <th>Kode Inventaris</th>
+            <th>Judul</th>
+            <th>Tgl Pinjam</th>
+            <th>Tgl Kembali</th>
+            <th>Keterlambatan</th>
+            <th>Denda</th>
+            <th>Aksi</th>
+          </tr>
+        </thead>
+        <tbody id="listDipinjam"></tbody>
+      </table>
+    </div>
+
+    <!-- Pinjam Buku -->
+    <div id="pinjam" class="tab-content">
+      <label>Kode Inventaris</label><br>
+      <input type="text" id="kodeInput" placeholder="Masukkan kode inventaris"><br>
+      <button id="pinjamBtn">Konfirmasi</button>
+    </div>
+  </div>
 </div>
 
-<!-- Popup -->
-<div id="popup" class="popup-overlay">
-  <div class="popup-box">
-    <h3 id="popupTitle"></h3>
-    <p id="popupMessage"></p>
-    <div id="popupExtra"></div>
-    <button id="popupBtn">OK</button>
+<!-- Popup Manual -->
+<div class="popup-overlay" id="popup">
+  <div class="popup">
+    <div id="popupMessage"></div>
+    <button id="popupOk">OK</button>
   </div>
 </div>
 
 <script>
+// Firebase Config
 const firebaseConfig = {
-    apiKey: "AIzaSyDguC7UH1JUzBQu1JZX8qPJGVeb6Pc7t98",
-    authDomain: "pustakawan-26664.firebaseapp.com",
-    databaseURL: "https://pustakawan-26664-default-rtdb.firebaseio.com",
-    projectId: "pustakawan-26664",
-    storageBucket: "pustakawan-26664.firebasestorage.app",
-    messagingSenderId: "284579513964",
-    appId: "1:284579513964:web:b45f73ac287e1f49eeba49"
+  apiKey: "AIzaSyByw2om-sKHqgCWBDJcE7FEtONoUoJbn9M",
+  authDomain: "traying-29bf4.firebaseapp.com",
+  databaseURL: "https://traying-29bf4-default-rtdb.firebaseio.com",
+  projectId: "traying-29bf4",
+  storageBucket: "traying-29bf4.appspot.com",
+  messagingSenderId: "42080663883",
+  appId: "1:42080663883:web:58f28d5d1164204457d030"
 };
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
-function formatTanggal(dateObj){
-    const bulan = ["Januari","Februari","Maret","April","Mei","Juni","Juli","Agustus","September","Oktober","November","Desember"];
-    return `${dateObj.getDate()} ${bulan[dateObj.getMonth()]} ${dateObj.getFullYear()}`;
+let anggotaAktif=null;
+
+// Popup helper
+function showPopup(msg, callback=null){
+  const popup=document.getElementById('popup');
+  const btn=document.getElementById('popupOk');
+  document.getElementById('popupMessage').innerText=msg;
+  popup.style.display='flex';
+  btn.focus();
+  btn.onclick=null;
+  btn.onclick=()=>{
+    popup.style.display='none';
+    if(callback) callback();
+  };
+  btn.onkeydown=(e)=>{if(e.key==='Enter') btn.click();}
 }
 
-// fungsi popup manual
-function showPopup(title, message, options = {}) {
-    document.getElementById("popupTitle").innerText = title;
-    document.getElementById("popupMessage").innerText = message;
-    const extra = document.getElementById("popupExtra");
-    extra.innerHTML = options.extraHtml || "";
-    const overlay = document.getElementById("popup");
-    const btn = document.getElementById("popupBtn");
+// Loading helper
+function showLoading(show){
+  document.getElementById('loading').style.display=show?'block':'none';
+}
 
-    overlay.style.display = "flex";
-    btn.focus();
+// Auto fokus Enter
+document.getElementById('nisInput').focus();
+document.getElementById('nisInput').addEventListener('keydown',e=>{
+  if(e.key==='Enter') document.getElementById('cekBtn').click();
+});
+document.getElementById('kodeInput').addEventListener('keydown',e=>{
+  if(e.key==='Enter') document.getElementById('pinjamBtn').click();
+});
 
-    function closePopup() {
-        overlay.style.display = "none";
-        btn.removeEventListener("click", closePopup);
-        document.removeEventListener("keydown", keyHandler);
-        if (options.callback) options.callback();
+// Cek Anggota
+document.getElementById('cekBtn').addEventListener('click',()=>{
+  const nis=document.getElementById('nisInput').value.trim();
+  if(!nis){showPopup("Masukkan NIS!"); return;}
+  showLoading(true);
+  db.ref("keanggotaan/"+nis).once("value").then(snap=>{
+    showLoading(false);
+    if(snap.exists()){
+      anggotaAktif={nis:nis,...snap.val()};
+      document.getElementById("profil").style.display="block";
+      document.getElementById("profil").innerHTML=
+        `<b>Profil Anggota</b><br>
+        NIS: ${nis}<br>
+        Nama: ${anggotaAktif.keanggotaan}<br>
+        Blok: ${anggotaAktif.blok}`;
+      document.getElementById("tabs").style.display="block";
+      muatDipinjam();
+      document.getElementById('kodeInput').focus();
+    }else{
+      showPopup("Anggota tidak ditemukan!");
     }
-    function keyHandler(e) {
-        if (e.key === "Enter") {
-            closePopup();
-        }
+  });
+});
+
+// Buka Tab
+function bukaTab(id){
+  document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));
+  document.querySelectorAll(".tab-content").forEach(c=>c.classList.remove("active"));
+  event.target.classList.add("active");
+  document.getElementById(id).classList.add("active");
+}
+
+// Muat Buku Dipinjam
+function muatDipinjam(){
+  const tbody=document.getElementById("listDipinjam");
+  showLoading(true);
+  db.ref("peminjaman").orderByChild("nis").equalTo(anggotaAktif.nis).on("value",snap=>{
+    showLoading(false);
+    tbody.innerHTML="";
+    const hariIni=new Date();
+    hariIni.setHours(0,0,0,0);
+    snap.forEach(child=>{
+      const d=child.val();
+      const tglKembali=new Date(d.tanggalKembali);
+      let keterlambatan=0,denda=0;
+      if(hariIni>tglKembali){
+        keterlambatan=Math.floor((hariIni-tglKembali)/(1000*60*60*24));
+        denda=keterlambatan*1000;
+      }
+      const tr=document.createElement("tr");
+      tr.innerHTML=`
+        <td>${d.kode}</td>
+        <td>${d.judul}</td>
+        <td>${d.tanggalPinjam}</td>
+        <td>${d.tanggalKembali}</td>
+        <td>${keterlambatan}</td>
+        <td>${denda}</td>
+        <td><button class="action-btn kembali" onclick="kembalikan('${child.key}')">Kembalikan</button></td>
+      `;
+      tbody.appendChild(tr);
+    });
+  });
+}
+
+// Pinjam Buku
+document.getElementById('pinjamBtn').addEventListener('click',()=>{
+  const kode=document.getElementById('kodeInput').value.trim();
+  if(!kode){showPopup("Masukkan kode inventaris!"); return;}
+  showLoading(true);
+
+  // cek apakah anggota sudah pinjam buku
+  db.ref("peminjaman").orderByChild("nis").equalTo(anggotaAktif.nis).once("value").then(snap=>{
+    if(snap.exists()){
+      showLoading(false);
+      showPopup("Anggota hanya bisa pinjam 1 buku!");
+      return;
     }
 
-    btn.addEventListener("click", closePopup);
-    document.addEventListener("keydown", keyHandler);
-}
-
-function resetForm(){
-    document.getElementById('nama').value = '';
-    document.getElementById('blok').value = '';
-    document.getElementById('nis').value = '';
-    document.getElementById('judul').value = '';
-    document.getElementById('inventaris').value = '';
-}
-
-function mulaiPinjam(){
-    const nama = document.getElementById('nama').value;
-    const blok = document.getElementById('blok').value;
-    const nis = Number(document.getElementById('nis').value);
-    const judul = document.getElementById('judul').value;
-    const inventaris = Number(document.getElementById('inventaris').value);
-
-    if(!nama || !blok || !nis || !judul || !inventaris){
-        showPopup("Peringatan", "Lengkapi semua data!");
+    // cek data buku
+    db.ref("buku/"+kode).once("value").then(snapBuku=>{
+      showLoading(false);
+      if(!snapBuku.exists()){
+        showPopup("Buku tidak ditemukan!");
         return;
-    }
+      }
+      const judul=snapBuku.val().judul;
 
-    // popup konfirmasi nis
-    showPopup("Konfirmasi", "Apakah NIS\nbenar untuk peminjam ini?", {
-        extraHtml: `<div class="nis-focus">${nis}</div>`,
-        callback: () => cekDanSimpan(nama, blok, nis, judul, inventaris)
+      const today=new Date();
+      const pinjam=today.toISOString().split("T")[0];
+      const kembaliDate=new Date();
+      kembaliDate.setDate(today.getDate()+4); // 5 hari total, minus 1 karena mulai hari pinjam
+      const kembali=kembaliDate.toISOString().split("T")[0];
+
+      const data={
+        nis:anggotaAktif.nis,
+        nama:anggotaAktif.keanggotaan,
+        blok:anggotaAktif.blok,
+        kode:kode,
+        judul:judul,
+        tanggalPinjam:pinjam,
+        tanggalKembali:kembali
+      };
+
+      db.ref("peminjaman").push(data).then(()=>{
+        document.getElementById('kodeInput').value='';
+        bukaTabLangsung('dipinjam');
+      });
     });
+  });
+});
+
+// Pindah Tab langsung via id
+function bukaTabLangsung(id){
+  document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));
+  document.querySelectorAll(".tab-content").forEach(c=>c.classList.remove("active"));
+  document.querySelector(`.tab[onclick*="${id}"]`).classList.add("active");
+  document.getElementById(id).classList.add("active");
 }
 
-function cekDanSimpan(nama, blok, nis, judul, inventaris){
-    db.ref("pinjam").once("value", snapshot => {
-        let masihPinjam = null;
-        snapshot.forEach(child => {
-            const data = child.val();
-            if (data.nis === nis && data.ket === "Dipinjam") {
-                masihPinjam = data;
-            }
-        });
-
-        if (masihPinjam) {
-            showPopup("Tidak Bisa Meminjam", 
-              `NIS ${nis} masih meminjam:\n"${masihPinjam.judul}"`);
-            return;
-        }
-
-        // kalau aman, simpan data
-        const hariIni = new Date();
-        const tanggalKembali = new Date(hariIni);
-        tanggalKembali.setDate(hariIni.getDate()+4);
-        const tglKembaliStr = formatTanggal(tanggalKembali);
-
-        const dataBaru = {
-            nama, blok, nis, judul, inventaris,
-            tanggal: formatTanggal(hariIni),
-            tanggal_kembali: tglKembaliStr,
-            ket:"Dipinjam"
-        };
-
-        db.ref('pinjam/' + nis + "_" + inventaris).set(dataBaru)
-          .then(()=> {
-              showPopup("Berhasil", `Buku ini harus dikembalikan:\n${tglKembaliStr}`, { callback: resetForm });
-          })
-          .catch(err=> showPopup("Error", err.message));
-    });
+// Kembalikan Buku
+function kembalikan(key){
+  showPopup("Apakah buku ini ingin dikembalikan?",()=>{
+    db.ref("peminjaman/"+key).remove();
+  });
 }
 </script>
-
 </body>
 </html>

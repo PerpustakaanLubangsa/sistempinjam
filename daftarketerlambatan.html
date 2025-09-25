@@ -3,118 +3,81 @@
 <head>
 <meta charset="UTF-8">
 <title>Daftar Keterlambatan</title>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
 <style>
-    body {
-        margin: 0;
-        font-family: sans-serif;
-        background: #e0f7fa;
-        color: #006064;
-        padding: 20px;
-    }
-    h2 {
-        text-align: center;
-        color: #004d40;
-    }
-    table {
-        width: 100%;
-        border-collapse: collapse;
-        margin-top: 20px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        border-radius: 8px;
-        overflow: hidden;
-    }
-    th, td {
-        border: 1px solid #00bcd4;
-        padding: 10px;
-        text-align: center;
-    }
-    th {
-        background: #00bcd4;
-        color: #fff;
-    }
-    tr:nth-child(even) {
-        background: #b2ebf2;
-    }
+body { margin:0; font-family:sans-serif; background:#e0f7fa; color:#006064; padding:20px; }
+h2 { text-align:center; color:#004d40; }
+table { width:100%; border-collapse: collapse; margin-top:20px; }
+th, td { border:1px solid #00bcd4; padding:10px; text-align:center; }
+th { background:#00bcd4; color:#fff; }
+tr:nth-child(even) { background:#b2ebf2; }
 </style>
 </head>
 <body>
 
 <h2>📕 Daftar Keterlambatan</h2>
 <table>
-    <thead>
-        <tr>
-            <th>Nama</th>
-            <th>Blok</th>
-            <th>Judul Buku</th>
-            <th>Inventaris</th>
-            <th>Harus Kembali</th>
-            <th>Keterlambatan (hari)</th>
-            <th>Denda</th>
-        </tr>
-    </thead>
-    <tbody id="lateBody"></tbody>
+  <thead>
+    <tr>
+      <th>Nama</th>
+      <th>Blok</th>
+      <th>Judul Buku</th>
+      <th>Kode Inventaris</th>
+      <th>Harus Kembali</th>
+      <th>Keterlambatan (hari)</th>
+      <th>Denda</th>
+    </tr>
+  </thead>
+  <tbody id="lateBody"></tbody>
 </table>
 
 <script>
 const firebaseConfig = {
-    apiKey: "AIzaSyDguC7UH1JUzBQu1JZX8qPJGVeb6Pc7t98",
-    authDomain: "pustakawan-26664.firebaseapp.com",
-    databaseURL: "https://pustakawan-26664-default-rtdb.firebaseio.com",
-    projectId: "pustakawan-26664",
-    storageBucket: "pustakawan-26664.appspot.com",
-    messagingSenderId: "284579513964",
-    appId: "1:284579513964:web:b45f73ac287e1f49eeba49"
+  apiKey: "AIzaSyByw2om-sKHqgCWBDJcE7FEtONoUoJbn9M",
+  authDomain: "traying-29bf4.firebaseapp.com",
+  databaseURL: "https://traying-29bf4-default-rtdb.firebaseio.com",
+  projectId: "traying-29bf4",
+  storageBucket: "traying-29bf4.appspot.com",
+  messagingSenderId: "42080663883",
+  appId: "1:42080663883:web:58f28d5d1164204457d030"
 };
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
-// Konversi string tanggal -> Date object
-function parseTanggal(tglStr){
-    if(!tglStr) return null;
-    const bulan = {
-        Januari:0, Februari:1, Maret:2, April:3, Mei:4, Juni:5,
-        Juli:6, Agustus:7, September:8, Oktober:9, November:10, Desember:11
-    };
-    const parts = tglStr.split(' ');
-    if(parts.length !== 3 || !bulan.hasOwnProperty(parts[1])) return null;
-    return new Date(parts[2], bulan[parts[1]], parts[0]);
-}
-
-// Format angka ke rupiah
-function formatRupiah(num) {
-    return "Rp " + num.toLocaleString("id-ID");
-}
+function formatRupiah(num){ return "Rp " + num.toLocaleString("id-ID"); }
 
 function updateKeterlambatan(){
-    const tbody = document.getElementById('lateBody');
-    db.ref('pinjam').on('value', snapshot=>{
-        tbody.innerHTML = '';
-        const hariIni = new Date();
-        hariIni.setHours(0,0,0,0);
+  const tbody = document.getElementById('lateBody');
+  db.ref('peminjaman').on('value', snap => {
+    tbody.innerHTML = '';
+    const hariIni = new Date();
+    hariIni.setHours(0,0,0,0);
 
-        snapshot.forEach(childSnap=>{
-            const data = childSnap.val();
-            const tglKembali = parseTanggal(data.tanggal_kembali);
+    snap.forEach(child => {
+      const data = child.val();
+      if(!data.tanggalKembali) return; // ambil dari field yang ada di Firebase
+      const tglKembali = new Date(data.tanggalKembali);
+      tglKembali.setHours(0,0,0,0);
 
-            if(tglKembali && hariIni > tglKembali){
-                const diffDays = Math.floor((hariIni - tglKembali)/(1000*60*60*24));
-                const denda = diffDays * 1000;
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td>${data.nama || '-'}</td>
-                    <td>${data.blok || '-'}</td>
-                    <td>${data.judul || '-'}</td>
-                    <td>${data.inventaris || '-'}</td>
-                    <td>${data.tanggal_kembali || '-'}</td>
-                    <td>${diffDays}</td>
-                    <td>${formatRupiah(denda)}</td>
-                `;
-                tbody.appendChild(tr);
-            }
-        });
+      if(hariIni > tglKembali){
+        const diffDays = Math.floor((hariIni - tglKembali)/(1000*60*60*24));
+        const denda = diffDays * 1000;
+
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${data.nama || '-'}</td>
+          <td>${data.blok || '-'}</td>
+          <td>${data.judul || '-'}</td>
+          <td>${data.kode || '-'}</td>
+          <td>${data.tanggalKembali || '-'}</td>
+          <td>${diffDays}</td>
+          <td>${formatRupiah(denda)}</td>
+        `;
+        tbody.appendChild(tr);
+      }
     });
+  });
 }
 
 updateKeterlambatan();

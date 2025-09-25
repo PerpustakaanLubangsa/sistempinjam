@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<title>Manajemen Data</title>
+<style>
+body {margin:0;font-family:sans-serif;background:#e0f7fa;color:#00bcd4;}
+.container {display:flex;height:100vh;}
+.sidebar {
+    width:180px;
+    background:#000; /* hitam pekat */
+    border-right: 3px solid #00bcd4; /* garis cyan */
+    padding:15px;
+    overflow-y:auto;
+}
+.sidebar h3 {
+    margin-top:0;
+    color:#00bcd4;
+    font-size:16px;
+    text-align:center;
+}
+.item {
+    padding:10px;
+    margin:8px 0;
+    border-radius:6px;
+    background:#000;
+    border:1px solid #00bcd4;
+    color:#00bcd4;
+    cursor:pointer;
+    transition:0.2s;
+    text-align:center;
+    font-size:14px;
+}
+.item:hover, .item.active {
+    background:#00bcd4;
+    color:#000;
+}
+iframe {
+    flex:1;
+    border:none;
+    background:#fff;
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+    <div class="sidebar">
+        <h3>Manajemen</h3>
+        <div class="item active" onclick="loadPage(this,'keanggotaan.html')">Keanggotaan</div>
+        <div class="item" onclick="loadPage(this,'buku.html')">Buku</div>
+    </div>
+    <iframe id="contentFrame" src="keanggotaan.html"></iframe>
+</div>
+
+<script>
+function loadPage(el, page) {
+    document.querySelectorAll('.item').forEach(i => i.classList.remove('active'));
+    el.classList.add('active');
+    document.getElementById('contentFrame').src = page;
+}
+</script>
+
+</body>
+</html>

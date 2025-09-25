@@ -3,16 +3,16 @@
 <head>
 <meta charset="UTF-8">
 <title>Kembalikan Buku</title>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
 <style>
 body {margin:0;font-family:sans-serif;background:#e0f7fa;display:flex;justify-content:center;align-items:center;height:100vh;color:#00bcd4;}
-.container {background:#fff;padding:40px 30px 30px 30px;border-radius:15px;box-shadow:0 8px 20px rgba(0,188,212,0.2);text-align:center;width:350px;animation:fadeIn 1s ease;}
+.container {background:#fff;padding:40px 30px 30px 30px;border-radius:15px;box-shadow:0 8px 20px rgba(0,188,212,0.2);text-align:center;width:380px;animation:fadeIn 1s ease;}
 h2 {margin-bottom:20px;font-weight:700;color:#00bcd4;animation:slideDown 0.8s ease;}
 .input-card {margin:15px 0;}
-.input-card input {width:90%;padding:10px;border-radius:10px;border:2px solid #00bcd4;outline:none;font-size:1em;transition:0.3s;display:block;margin:0 auto;}
+.input-card input {width:90%;padding:10px;border-radius:10px;border:2px solid #00bcd4;outline:none;font-size:1em;display:block;margin:0 auto;}
 .input-card input:focus {border-color:#00acc1;box-shadow:0 0 8px #00acc1;}
-button {width:50%;padding:10px;margin-top:20px;border-radius:10px;border:none;background:#00bcd4;color:#fff;font-weight:bold;cursor:pointer;transition:0.3s;display:block;margin:auto;}
+button {width:50%;padding:10px;margin-top:20px;border-radius:10px;border:none;background:#00bcd4;color:#fff;font-weight:bold;cursor:pointer;display:block;margin:auto;}
 button:hover {background:#00acc1;transform:scale(1.05);}
 @keyframes fadeIn {from {opacity:0;} to {opacity:1;}}
 @keyframes slideDown {from {transform:translateY(-20px);opacity:0;} to {transform:translateY(0);opacity:1;}}
@@ -25,14 +25,15 @@ button:hover {background:#00acc1;transform:scale(1.05);}
     z-index: 1000; display:none;
 }
 .popup {
-    background:#fff; padding:20px 25px; border-radius:15px;
-    width:320px; text-align:left; box-shadow:0 5px 15px rgba(0,0,0,0.3);
+    background:#fff; padding:25px; border-radius:15px;
+    width:350px; text-align:left; box-shadow:0 5px 15px rgba(0,0,0,0.3);
     animation:fadeIn 0.3s ease;
 }
 .popup h3 {margin:0 0 15px;font-size:1.2em;color:#00bcd4;text-align:center;}
-.popup p {margin-bottom:20px;color:#333;white-space:pre-line;}
+.popup .info-line {margin-bottom:8px;}
+.popup .late {color:red; font-weight:bold;}
 .popup button {
-    width:80px; margin:0 10px; padding:8px;
+    width:90px; margin:0 10px; padding:8px;
     border:none; border-radius:8px; font-weight:bold; cursor:pointer;
 }
 .ok-btn {background:#00bcd4;color:#fff;}
@@ -43,7 +44,7 @@ button:hover {background:#00acc1;transform:scale(1.05);}
 
 <div class="container">
     <h2>Kembalikan Buku</h2>
-    <div class="input-card"><input id="inventaris" type="number" placeholder="Inventaris"></div>
+    <div class="input-card"><input id="inventaris" type="text" placeholder="Kode Inventaris"></div>
     <button onclick="kembalikanBuku()">Kembalikan</button>
 </div>
 
@@ -51,27 +52,29 @@ button:hover {background:#00acc1;transform:scale(1.05);}
 <div id="popupOverlay" class="popup-overlay">
   <div class="popup" id="popupBox">
     <h3 id="popupTitle"></h3>
-    <p id="popupMessage"></p>
+    <div id="popupMessage"></div>
     <div id="popupButtons" style="text-align:center;"></div>
   </div>
 </div>
 
 <script>
 const firebaseConfig = {
-    apiKey: "AIzaSyDguC7UH1JUzBQu1JZX8qPJGVeb6Pc7t98",
-    authDomain: "pustakawan-26664.firebaseapp.com",
-    databaseURL: "https://pustakawan-26664-default-rtdb.firebaseio.com",
-    projectId: "pustakawan-26664",
-    storageBucket: "pustakawan-26664.firebasestorage.app",
-    messagingSenderId: "284579513964",
-    appId: "1:284579513964:web:b45f73ac287e1f49eeba49"
+    apiKey: "AIzaSyByw2om-sKHqgCWBDJcE7FEtONoUoJbn9M",
+    authDomain: "traying-29bf4.firebaseapp.com",
+    databaseURL: "https://traying-29bf4-default-rtdb.firebaseio.com",
+    projectId: "traying-29bf4",
+    storageBucket: "traying-29bf4.appspot.com",
+    messagingSenderId: "42080663883",
+    appId: "1:42080663883:web:58f28d5d1164204457d030"
 };
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
-function showPopup(title, message, buttons=[{text:"OK",action:closePopup}]) {
-    document.getElementById('popupTitle').innerHTML = title;
-    document.getElementById('popupMessage').innerHTML = message;
+// Popup helper
+function showPopup(title, content, buttons=[{text:"OK",action:closePopup}]) {
+    document.getElementById('popupTitle').innerText = title;
+    const msgDiv = document.getElementById('popupMessage');
+    msgDiv.innerHTML = content;
     const btnContainer = document.getElementById('popupButtons');
     btnContainer.innerHTML = '';
     buttons.forEach((btn, idx)=>{
@@ -83,11 +86,8 @@ function showPopup(title, message, buttons=[{text:"OK",action:closePopup}]) {
         if(idx===0) b.focus();
     });
     document.getElementById('popupOverlay').style.display='flex';
-
     document.onkeydown = function(e){
-        if(e.key==="Enter"){
-            buttons[0].action();
-        }
+        if(e.key==="Enter"){ buttons[0].action(); }
     };
 }
 function closePopup(){ 
@@ -99,47 +99,46 @@ function resetForm(){
     document.getElementById('inventaris').focus();
 }
 
-function parseTanggal(tglStr) {
-    const bulan = {Januari:0,Februari:1,Maret:2,April:3,Mei:4,Juni:5,Juli:6,Agustus:7,September:8,Oktober:9,November:10,Desember:11};
-    const parts = tglStr.split(' ');
-    return new Date(parts[2], bulan[parts[1]], parts[0]);
-}
-
+// Kembalikan Buku
 function kembalikanBuku() {
-    const inventaris = Number(document.getElementById('inventaris').value);
-    if(!inventaris){ 
-        showPopup("Peringatan","Masukkan nomor inventaris!"); 
+    const kode = document.getElementById('inventaris').value.trim();
+    if(!kode){ 
+        showPopup("Peringatan","Masukkan kode inventaris!"); 
         return; 
     }
 
-    db.ref('pinjam').orderByChild('inventaris').equalTo(inventaris).once('value', snapshot=>{
+    db.ref('peminjaman').orderByChild('kode').equalTo(kode).once('value', snapshot=>{
         if(snapshot.exists()){
             snapshot.forEach(childSnap=>{
                 const data = childSnap.val();
-                const tanggalKembali = parseTanggal(data.tanggal_kembali);
-                const hariIni = new Date();
-                hariIni.setHours(0,0,0,0);
-                tanggalKembali.setHours(0,0,0,0);
-                let info = `Buku berhasil dikembalikan\n\n`;
-                info += `Nama: ${data.nama}\n`;
-                info += `Blok: ${data.blok}\n`;
-                info += `NIS: ${data.nis}\n`;
-                info += `Judul Buku: ${data.judul}\n`;
-                info += `Inventaris: ${data.inventaris}\n`;
-                info += `Tanggal Pinjam: ${data.tanggal}\n`;
-                info += `Harus Dikembalikan: ${data.tanggal_kembali}\n`;
+                const hariIni = new Date(); hariIni.setHours(0,0,0,0);
+                const tglKembali = new Date(data.tanggalKembali); tglKembali.setHours(0,0,0,0);
 
-                if(hariIni > tanggalKembali){
-                    const diffTime = hariIni - tanggalKembali;
-                    const diffDays = Math.floor(diffTime / (1000*60*60*24));
+                let content = '';
+                content += `<div class="info-line"><b>Nama:</b> ${data.nama}</div>`;
+                content += `<div class="info-line"><b>Blok:</b> ${data.blok}</div>`;
+                content += `<div class="info-line"><b>NIS:</b> ${data.nis}</div>`;
+                content += `<div class="info-line"><b>Judul Buku:</b> ${data.judul}</div>`;
+                content += `<div class="info-line"><b>Kode Inventaris:</b> ${data.kode}</div>`;
+                content += `<div class="info-line"><b>Tanggal Pinjam:</b> ${data.tanggalPinjam}</div>`;
+                content += `<div class="info-line"><b>Harus Dikembalikan:</b> ${data.tanggalKembali}</div>`;
+
+                if(hariIni > tglKembali){
+                    const diffDays = Math.floor((hariIni - tglKembali)/(1000*60*60*24));
                     const denda = diffDays * 1000;
-                    info += `Keterlambatan: ${diffDays} hari\n`;
-                    info += `Denda: Rp${denda}\n`;
+                    content += `<div class="info-line late">Keterlambatan: ${diffDays} hari</div>`;
+                    content += `<div class="info-line late">Denda: Rp${denda}</div>`;
+                } else {
+                    content += `<div class="info-line">Buku dikembalikan tepat waktu</div>`;
                 }
 
-                showPopup("Informasi", info, [{
+                showPopup("Informasi", content, [{
                     text:"OK",
-                    action:()=>{ closePopup(); resetForm(); childSnap.ref.remove(); }
+                    action:()=>{ 
+                        childSnap.ref.remove(); 
+                        closePopup(); 
+                        resetForm(); 
+                    }
                 }]);
             });
         } else {
@@ -148,8 +147,11 @@ function kembalikanBuku() {
     });
 }
 
-// auto fokus saat halaman dibuka
+// Auto fokus & Enter
 window.onload = ()=>{ document.getElementById('inventaris').focus(); };
+document.getElementById('inventaris').addEventListener('keydown', e=>{
+    if(e.key==='Enter') kembalikanBuku();
+});
 </script>
 
 </body>

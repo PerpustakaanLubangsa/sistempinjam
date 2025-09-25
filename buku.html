@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<title>Manajemen Buku</title>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+<style>
+body {
+  font-family: sans-serif;
+  background: #e0f7fa; /* biru halus */
+  margin: 0;
+  padding: 20px;
+  color: #006064;
+}
+h2 {text-align:center;}
+.container {
+  max-width: 900px;
+  margin: auto;
+  background: #ffffff;
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 0 8px rgba(0,0,0,0.1);
+}
+input, button {
+  padding: 8px;
+  margin: 5px;
+  border-radius: 6px;
+  border: 1px solid #00bcd4;
+}
+button {
+  cursor: pointer;
+  background: #00bcd4;
+  color: #fff;
+  border: none;
+  transition: 0.2s;
+}
+button:hover {background: #0097a7;}
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 15px;
+}
+table, th, td {
+  border: 1px solid #00bcd4;
+}
+th, td {
+  padding: 8px;
+  text-align: center;
+}
+.action-btn {
+  margin: 2px;
+  padding: 5px 10px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+.edit {background: #ffc107; color:#000;}
+.edit:hover {background: #e0a800;}
+.delete {background: #f44336; color:#fff;}
+.delete:hover {background: #c62828;}
+/* Popup manual */
+.popup-overlay {
+  display:none;
+  position:fixed;
+  top:0;left:0;width:100%;height:100%;
+  background:rgba(0,0,0,0.6);
+  justify-content:center;
+  align-items:center;
+}
+.popup {
+  background:#fff;
+  padding:20px;
+  border-radius:10px;
+  width:300px;
+  text-align:center;
+}
+.popup input {width:90%;}
+</style>
+</head>
+<body>
+<div class="container">
+  <h2>Manajemen Buku</h2>
+  <form id="formTambah">
+    <input type="text" id="inventaris" placeholder="No. Inventaris" required>
+    <input type="text" id="judul" placeholder="Judul Buku" required>
+    <button type="submit">Tambah</button>
+  </form>
+
+  <div>
+    <p><b>Upload Excel (.xlsx)</b> dengan kolom: Inventaris | Judul</p>
+    <input type="file" id="uploadExcel" accept=".xlsx,.xls">
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>No. Inventaris</th>
+        <th>Judul</th>
+        <th style="width:160px;">Aksi</th>
+      </tr>
+    </thead>
+    <tbody id="dataBuku"></tbody>
+  </table>
+
+  <!-- Tombol Hapus Semua -->
+  <div style="margin-top:15px; text-align:right;">
+    <button class="action-btn delete" onclick="bukaHapusSemua()">Hapus Semua Data</button>
+  </div>
+</div>
+
+<!-- Popup Edit -->
+<div class="popup-overlay" id="popupEdit">
+  <div class="popup">
+    <h3>Edit Buku</h3>
+    <input type="text" id="editJudul"><br>
+    <button id="btnSimpanEdit">Simpan</button>
+    <button onclick="tutupPopup('popupEdit')">Batal</button>
+  </div>
+</div>
+
+<!-- Popup Hapus -->
+<div class="popup-overlay" id="popupHapus">
+  <div class="popup">
+    <h3>Konfirmasi Hapus</h3>
+    <p>Apakah kamu yakin ingin menghapus buku ini?</p>
+    <button id="btnHapusConfirm">Hapus</button>
+    <button onclick="tutupPopup('popupHapus')">Batal</button>
+  </div>
+</div>
+
+<!-- Popup Hapus Semua -->
+<div class="popup-overlay" id="popupHapusSemua">
+  <div class="popup">
+    <h3>Konfirmasi Hapus Semua</h3>
+    <p>⚠️ Apakah kamu yakin ingin menghapus <b>SEMUA data buku</b>?</p>
+    <button id="btnHapusSemuaConfirm">Hapus Semua</button>
+    <button onclick="tutupPopup('popupHapusSemua')">Batal</button>
+  </div>
+</div>
+
+<script>
+// Konfigurasi Firebase
+const firebaseConfig = {
+  apiKey: "AIzaSyByw2om-sKHqgCWBDJcE7FEtONoUoJbn9M",
+  authDomain: "traying-29bf4.firebaseapp.com",
+  databaseURL: "https://traying-29bf4-default-rtdb.firebaseio.com",
+  projectId: "traying-29bf4",
+  storageBucket: "traying-29bf4.appspot.com",
+  messagingSenderId: "42080663883",
+  appId: "1:42080663883:web:58f28d5d1164204457d030"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
+// Tambah buku
+document.getElementById("formTambah").addEventListener("submit", e=>{
+  e.preventDefault();
+  const inv = document.getElementById("inventaris").value.trim();
+  const judul = document.getElementById("judul").value.trim();
+  if(inv && judul){
+    db.ref("buku/"+inv).set({judul:judul});
+    e.target.reset();
+  }
+});
+
+// Upload Excel
+document.getElementById("uploadExcel").addEventListener("change", e=>{
+  const file = e.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = evt=>{
+    const data = new Uint8Array(evt.target.result);
+    const workbook = XLSX.read(data,{type:"array"});
+    const sheet = workbook.Sheets[workbook.SheetNames[0]];
+    const rows = XLSX.utils.sheet_to_json(sheet);
+    rows.forEach(r=>{
+      if(r.Inventaris && r.Judul){
+        db.ref("buku/"+r.Inventaris).set({judul:r.Judul});
+      }
+    });
+  };
+  reader.readAsArrayBuffer(file);
+});
+
+// Tampilkan data
+const tbody = document.getElementById("dataBuku");
+db.ref("buku").on("value", snap=>{
+  tbody.innerHTML="";
+  snap.forEach(child=>{
+    const d=child.val();
+    const tr=document.createElement("tr");
+    tr.innerHTML=`
+      <td>${child.key}</td>
+      <td>${d.judul}</td>
+      <td>
+        <button class="action-btn edit" onclick="bukaEdit('${child.key}','${d.judul}')">Edit</button>
+        <button class="action-btn delete" onclick="bukaHapus('${child.key}')">Hapus</button>
+      </td>`;
+    tbody.appendChild(tr);
+  });
+});
+
+// Popup kontrol
+function tutupPopup(id){document.getElementById(id).style.display="none";}
+function bukaEdit(inv,judul){
+  editINV=inv;
+  document.getElementById("editJudul").value=judul;
+  document.getElementById("popupEdit").style.display="flex";
+  document.getElementById("editJudul").focus();
+}
+function bukaHapus(inv){
+  hapusINV=inv;
+  document.getElementById("popupHapus").style.display="flex";
+  document.getElementById("btnHapusConfirm").focus();
+}
+function bukaHapusSemua(){
+  document.getElementById("popupHapusSemua").style.display="flex";
+  document.getElementById("btnHapusSemuaConfirm").focus();
+}
+
+// Edit simpan
+let editINV=null;
+document.getElementById("btnSimpanEdit").addEventListener("click",()=>{
+  const judul=document.getElementById("editJudul").value.trim();
+  if(editINV && judul){
+    db.ref("buku/"+editINV).update({judul:judul});
+    tutupPopup("popupEdit");
+  }
+});
+
+// Hapus satu
+let hapusINV=null;
+document.getElementById("btnHapusConfirm").addEventListener("click",()=>{
+  if(hapusINV){
+    db.ref("buku/"+hapusINV).remove();
+    tutupPopup("popupHapus");
+  }
+});
+
+// Hapus semua
+document.getElementById("btnHapusSemuaConfirm").addEventListener("click",()=>{
+  db.ref("buku").remove().then(()=>tutupPopup("popupHapusSemua"));
+});
+
+// Akses Enter di popup
+document.addEventListener("keydown", e=>{
+  if(e.key==="Enter"){
+    if(document.getElementById("popupEdit").style.display==="flex"){
+      document.getElementById("btnSimpanEdit").click();
+    } else if(document.getElementById("popupHapus").style.display==="flex"){
+      document.getElementById("btnHapusConfirm").click();
+    } else if(document.getElementById("popupHapusSemua").style.display==="flex"){
+      document.getElementById("btnHapusSemuaConfirm").click();
+    }
+  }
+});
+</script>
+</body>
+</html>
