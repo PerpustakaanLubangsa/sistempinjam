@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistem Perpustakaan - Tanpa Scroll Halaman</title>
+    <title>Sistem Perpustakaan - Instan Load</title>
     <link rel="icon" type="image/png" href="logo.png">
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
     <style>
@@ -11,15 +11,13 @@
         :root {
             --primary-color: #007bff; 
             --secondary-color: #6c757d; 
-            --background-light: #f4f7f9; 
             --content-background: #ffffff; 
-            --header-height: 60px; /* Tentukan tinggi header */
+            --header-height: 60px;
             --sidebar-width: 280px;
             --text-dark: #343a40; 
-            --shadow-subtle: 0 2px 4px rgba(0, 0, 0, 0.08); 
         }
 
-        /* KUNCI 1: Mencegah scroll pada level HTML/Body */
+        /* KUNCI 1: Memastikan Full Height Viewport */
         html, body {
             height: 100%;
             margin: 0;
@@ -28,13 +26,13 @@
 
         body {
             font-family: 'Roboto', sans-serif;
-            background: var(--background-light);
+            background: #f4f7f9;
             color: var(--text-dark);
             display: flex;
             flex-direction: column;
         }
 
-        /* --- Header (Branding) --- */
+        /* --- Header --- */
         header {
             height: var(--header-height);
             background: var(--content-background);
@@ -58,33 +56,31 @@
 
         /* --- Area Konten Utama --- */
         #content-area {
-            /* Hapus padding, pastikan full */
             padding: 0; 
-            overflow-y: auto; 
-            /* Tambahkan display:flex agar #main-content/error-message bisa 100% tinggi */
-            display: flex; 
+            overflow: hidden; /* Penting! Scroll di handle oleh IFRAME di dalamnya jika diperlukan */
+            position: relative; /* Kunci untuk positioning iframe */
         }
         
-        #main-content {
-            background: var(--content-background);
-            padding: 0;
-            border-radius: 0;
-            box-shadow: none;
-            border: none;
-            
-            /* KUNCI 2: Ambil 100% lebar dan tinggi yang tersisa di #content-area */
+        /* KUNCI 2: Styling untuk IFRAME */
+        .page-iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
             width: 100%;
-            flex-grow: 1; 
+            height: 100%; /* Mengisi penuh area konten */
+            border: none;
+            background: var(--content-background);
+            opacity: 0; /* Awalnya tersembunyi */
+            visibility: hidden; /* Awalnya tersembunyi */
+            transition: opacity 0.3s; /* Transisi halus saat muncul/hilang */
         }
         
-        #main-content h2 {
-            color: var(--primary-color);
-            border-bottom: 2px solid #e9ecef;
-            padding: 20px; 
-            margin: 0;
+        .page-iframe.active {
+            opacity: 1; /* Tampilkan halaman aktif */
+            visibility: visible;
         }
 
-        /* --- Sidebar Kanan --- */
+        /* --- Sidebar Kanan (Tidak diubah dari versi sebelumnya) --- */
         #sidebar {
             background: var(--content-background);
             padding: 20px;
@@ -97,7 +93,7 @@
             flex-shrink: 0;
             overflow-y: auto;
         }
-
+        
         #sidebar h3 {
             color: var(--secondary-color);
             text-align: left;
@@ -122,47 +118,9 @@
             transition: all 0.2s ease;
             text-align: left;
         }
+        .nav-button:hover { background: #e9ecef; color: var(--primary-color); }
+        .nav-button.active { background: var(--primary-color); color: #ffffff; font-weight: 600; box-shadow: 0 3px 6px rgba(0, 123, 255, 0.3); }
 
-        .nav-button:hover {
-            background: #e9ecef; 
-            color: var(--primary-color);
-            font-weight: 500;
-        }
-
-        .nav-button.active {
-            background: var(--primary-color);
-            color: #ffffff; 
-            font-weight: 600;
-            box-shadow: 0 3px 6px rgba(0, 123, 255, 0.3);
-        }
-
-        /* KUNCI 3: Styling Error Message agar memenuhi ruang penuh */
-        .error-message {
-             color: #dc3545; 
-             text-align:center; 
-             /* Pastikan tidak ada margin/padding yang mendorong batas */
-             padding: 0; 
-             margin: 0; 
-             background: #fff3f5; 
-             border: 1px solid #dc3545;
-             border-radius: 0; 
-             
-             /* KUNCI PENTING: Ambil 100% tinggi yang tersedia */
-             height: 100%; 
-             width: 100%;
-             box-sizing: border-box; /* Agar border tidak menambah ukuran */
-             
-             /* Gunakan Flexbox untuk memusatkan teks error di dalam kotak yang full height */
-             display: flex;
-             flex-direction: column;
-             justify-content: center; /* Pusat vertikal */
-             align-items: center; /* Pusat horizontal */
-             line-height: 1.6; /* Jarak baris yang lebih baik */
-        }
-        
-        .error-message h3, .error-message p {
-            margin: 5px 0; /* Margin kecil untuk teks di dalam error box */
-        }
     </style>
 </head>
 <body>
@@ -173,89 +131,48 @@
 
 <div id="main-container">
     <div id="content-area">
-        <div id="main-content">
-            <h2>Selamat Datang</h2>
-            <p style="padding: 20px;">Aplikasi Sistem Perpustakaan Modern. Konten ini sekarang memenuhi seluruh area konten.</p>
-        </div>
+        
+        <iframe id="frame-beranda" src="beranda.html" class="page-iframe active" data-id="beranda"></iframe>
+        <iframe id="frame-pinjam" src="pinjam.html" class="page-iframe" data-id="pinjam"></iframe>
+        <iframe id="frame-kembali" src="kembali.html" class="page-iframe" data-id="kembali"></iframe>
+        <iframe id="frame-manajemen" src="manajemen.html" class="page-iframe" data-id="manajemen"></iframe>
+        
     </div>
 
     <div id="sidebar">
         <h3>MENU APLIKASI</h3>
-        <button data-page="beranda.html" class="nav-button active">Beranda</button>
-        <button data-page="pinjam.html" class="nav-button">Pinjam Buku</button>
-        <button data-page="kembali.html" class="nav-button">Pengembalian</button>
-        <button data-page="manajemen.html" class="nav-button">Manajemen Data</button>
+        <button data-id="beranda" class="nav-button active" onclick="showPage(this)">Beranda</button>
+        <button data-id="pinjam" class="nav-button" onclick="showPage(this)">Pinjam Buku</button>
+        <button data-id="kembali" class="nav-button" onclick="showPage(this)">Pengembalian</button>
+        <button data-id="manajemen" class="nav-button" onclick="showPage(this)">Manajemen Data</button>
     </div>
 </div>
 
 <script>
-    const contentArea = document.getElementById('main-content');
-    const navButtons = document.querySelectorAll('.nav-button');
-
-    // Fungsi Utama untuk Memuat Halaman menggunakan AJAX
-    function loadPage(page, button) {
-        // Tampilkan loading state
-        contentArea.innerHTML = `
-            <div style="text-align:center; padding:50px; color:var(--primary-color);">
-                <div class="spinner" style="border: 4px solid rgba(0, 123, 255, 0.1); border-top: 4px solid var(--primary-color); border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; margin: 0 auto 10px;"></div>
-                Memuat ${button ? button.textContent.toUpperCase() : 'Konten'}...
-            </div>
-        `;
-        
-        // Animasi CSS untuk loading spinner
-        if (!document.getElementById('spin-style')) {
-            const style = document.createElement('style');
-            style.id = 'spin-style';
-            style.innerHTML = '@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }';
-            document.head.appendChild(style);
-        }
-
-        fetch(page)
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error(`Gagal memuat halaman: ${response.status} ${response.statusText}`);
-                }
-                return response.text();
-            })
-            .then(html => {
-                contentArea.innerHTML = html;
-            })
-            .catch(error => {
-                // Ketika error, seluruh innerHTML #main-content diganti dengan pesan error
-                contentArea.innerHTML = `<div class="error-message">
-                                            <h3>Gagal Memuat Konten!</h3>
-                                            <p style="margin-bottom: 5px;">Failed to execute 'fetch' on Window: Failed to parse URL from ${page}</p>
-                                            <p>Pastikan file <strong>${page}</strong> ada di folder yang sama.</p>
-                                        </div>`;
-                console.error('Fetch error:', error);
-            });
-    }
-
-    // Fungsi untuk Menandai Tombol Aktif
-    function updateActiveButton(targetButton) {
-        navButtons.forEach(button => {
-            button.classList.remove('active');
-        });
-        targetButton.classList.add('active');
-    }
-
-    // Menambahkan Event Listener ke Tombol Navigasi
-    navButtons.forEach(button => {
-        button.addEventListener('click', function() {
-            const page = this.getAttribute('data-page');
-            loadPage(page, this);
-            updateActiveButton(this);
-        });
+function showPage(el) {
+    const pageId = el.getAttribute('data-id');
+    
+    // 1. Kelola Tombol Aktif (Sidebar)
+    document.querySelectorAll('.nav-button').forEach(button => {
+        button.classList.remove('active');
     });
-
-    // Muat Halaman Awal saat Dokumen Siap
-    document.addEventListener('DOMContentLoaded', () => {
-        const initialButton = document.querySelector('.nav-button.active');
-        const initialPage = initialButton.getAttribute('data-page');
-        
-        loadPage(initialPage, initialButton);
+    el.classList.add('active');
+    
+    // 2. Kelola Konten Aktif (Iframe)
+    document.querySelectorAll('.page-iframe').forEach(iframe => {
+        // Sembunyikan semua iframe
+        iframe.classList.remove('active');
     });
+    
+    // Tampilkan iframe yang sesuai
+    const targetFrame = document.querySelector(`.page-iframe[data-id="${pageId}"]`);
+    if (targetFrame) {
+        targetFrame.classList.add('active');
+    }
+}
 
+// Tidak ada lagi DOMContentLoaded load karena semua sudah dimuat melalui atribut src
+// pada tag <iframe>.
 </script>
 
 </body>
