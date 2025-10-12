@@ -19,18 +19,17 @@
             --shadow-subtle: 0 2px 4px rgba(0, 0, 0, 0.08); 
         }
 
-        /* 1. KUNCI: Mencegah scroll pada level HTML/Body */
+        /* KUNCI 1: Mencegah scroll pada level HTML/Body */
         html, body {
             height: 100%;
             margin: 0;
-            overflow: hidden; /* Mencegah scrolling halaman */
+            overflow: hidden; 
         }
 
         body {
             font-family: 'Roboto', sans-serif;
             background: var(--background-light);
             color: var(--text-dark);
-            /* Menggunakan Flexbox untuk tata letak vertikal dasar: Header dan Konten Utama */
             display: flex;
             flex-direction: column;
         }
@@ -45,45 +44,40 @@
             font-weight: 700;
             box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
             display: flex;
-            align-items: center; /* Pusatkan teks secara vertikal */
-            flex-shrink: 0; /* Pastikan header tidak mengecil */
+            align-items: center;
+            flex-shrink: 0;
         }
 
         /* --- Kontainer Utama (Konten + Sidebar) --- */
         #main-container {
-            /* 2. KUNCI: Membuat kontainer ini mengambil sisa ruang vertikal */
+            /* KUNCI 2: Mengambil sisa ruang vertikal */
             flex-grow: 1; 
             display: grid;
             grid-template-columns: 1fr var(--sidebar-width);
-            overflow: hidden; /* Mencegah scrolling di sini */
+            overflow: hidden;
         }
 
         /* --- Area Konten Utama --- */
         #content-area {
-            /* PERUBAHAN UTAMA: Hapus padding di sini */
             padding: 0; 
-            overflow-y: auto; /* Memungkinkan scrolling HANYA di area konten ini jika dibutuhkan */
+            overflow-y: auto; 
         }
         
         #main-content {
             background: var(--content-background);
-            /* PERUBAHAN UTAMA: Hapus padding di sini */
-            padding: 0; 
-            
-            /* Hapus border-radius dan box-shadow agar menempel sempurna */
+            padding: 0;
             border-radius: 0;
             box-shadow: none;
             border: none;
             
-            /* Konten akan mengisi 100% tinggi dan lebar dari #content-area */
+            /* KUNCI 3: Pastikan elemen ini setidaknya setinggi kontainernya */
             min-height: 100%; 
         }
         
         #main-content h2 {
-            /* Pertahankan styling judul, mungkin tambahkan padding internal jika perlu */
             color: var(--primary-color);
             border-bottom: 2px solid #e9ecef;
-            padding: 20px; /* Padding di dalam konten yang dimuat */
+            padding: 20px; 
             margin: 0;
         }
 
@@ -97,8 +91,8 @@
             display: flex;
             flex-direction: column;
             gap: 10px;
-            flex-shrink: 0; 
-            overflow-y: auto; 
+            flex-shrink: 0;
+            overflow-y: auto;
         }
 
         #sidebar h3 {
@@ -111,7 +105,7 @@
             padding-left: 10px;
         }
 
-        /* Gaya Tombol Navigasi Sidebar */
+        /* Gaya Tombol Navigasi Sidebar (Tidak diubah) */
         .nav-button {
             width: 100%;
             background: none; 
@@ -139,13 +133,32 @@
             box-shadow: 0 3px 6px rgba(0, 123, 255, 0.3);
         }
 
+        /* KUNCI 4: Styling Error Message agar memenuhi ruang */
         .error-message {
              color: #dc3545; 
              text-align:center; 
-             padding:50px; 
+             /* Hapus padding dan set margin ke 0 */
+             padding: 0; 
+             margin: 0; 
              background: #fff3f5; 
              border: 1px solid #dc3545;
-             border-radius: 5px;
+             border-radius: 0; /* Hapus sudut membulat */
+             height: 100%; /* Pastikan error message mengisi tingginya */
+             box-sizing: border-box; /* Untuk memastikan border 1px tidak menyebabkan overflow */
+             
+             /* Menata konten error di tengah */
+             display: flex;
+             flex-direction: column;
+             justify-content: center;
+             align-items: center;
+        }
+        
+        .error-message h3 {
+            margin-bottom: 10px;
+        }
+        
+        .error-message p {
+            padding: 0 20px;
         }
     </style>
 </head>
@@ -159,7 +172,7 @@
     <div id="content-area">
         <div id="main-content">
             <h2>Selamat Datang</h2>
-            <p style="padding: 20px;">Aplikasi Sistem Perpustakaan Modern. Konten ini tidak memiliki padding di batas luar, dan padding internal harus diterapkan pada konten yang dimuat.</p>
+            <p style="padding: 20px;">Aplikasi Sistem Perpustakaan Modern. Konten ini sekarang memenuhi seluruh area konten.</p>
         </div>
     </div>
 
@@ -178,7 +191,7 @@
 
     // Fungsi Utama untuk Memuat Halaman menggunakan AJAX
     function loadPage(page, button) {
-        // Tampilkan loading state
+        // ... (Kode loading spinner tidak diubah) ...
         contentArea.innerHTML = `
             <div style="text-align:center; padding:50px; color:var(--primary-color);">
                 <div class="spinner" style="border: 4px solid rgba(0, 123, 255, 0.1); border-top: 4px solid var(--primary-color); border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; margin: 0 auto 10px;"></div>
@@ -186,13 +199,13 @@
             </div>
         `;
         
-        // Animasi CSS untuk loading spinner
         if (!document.getElementById('spin-style')) {
             const style = document.createElement('style');
             style.id = 'spin-style';
             style.innerHTML = '@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }';
             document.head.appendChild(style);
         }
+        // ...
 
         fetch(page)
             .then(response => {
@@ -205,6 +218,7 @@
                 contentArea.innerHTML = html;
             })
             .catch(error => {
+                // Modifikasi Tampilan Error agar FULL HEIGHT
                 contentArea.innerHTML = `<div class="error-message">
                                             <h3>Gagal Memuat Konten!</h3>
                                             <p>${error.message}</p>
@@ -214,7 +228,8 @@
             });
     }
 
-    // Fungsi untuk Menandai Tombol Aktif
+    // ... (Fungsi updateActiveButton dan Event Listener tidak diubah) ...
+
     function updateActiveButton(targetButton) {
         navButtons.forEach(button => {
             button.classList.remove('active');
@@ -222,7 +237,6 @@
         targetButton.classList.add('active');
     }
 
-    // Menambahkan Event Listener ke Tombol Navigasi
     navButtons.forEach(button => {
         button.addEventListener('click', function() {
             const page = this.getAttribute('data-page');
@@ -231,7 +245,6 @@
         });
     });
 
-    // Muat Halaman Awal saat Dokumen Siap
     document.addEventListener('DOMContentLoaded', () => {
         const initialButton = document.querySelector('.nav-button.active');
         const initialPage = initialButton.getAttribute('data-page');
