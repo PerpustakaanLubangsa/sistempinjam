@@ -50,7 +50,6 @@
 
         /* --- Kontainer Utama (Konten + Sidebar) --- */
         #main-container {
-            /* KUNCI 2: Mengambil sisa ruang vertikal */
             flex-grow: 1; 
             display: grid;
             grid-template-columns: 1fr var(--sidebar-width);
@@ -59,8 +58,11 @@
 
         /* --- Area Konten Utama --- */
         #content-area {
+            /* Hapus padding, pastikan full */
             padding: 0; 
             overflow-y: auto; 
+            /* Tambahkan display:flex agar #main-content/error-message bisa 100% tinggi */
+            display: flex; 
         }
         
         #main-content {
@@ -70,8 +72,9 @@
             box-shadow: none;
             border: none;
             
-            /* KUNCI 3: Pastikan elemen ini setidaknya setinggi kontainernya */
-            min-height: 100%; 
+            /* KUNCI 2: Ambil 100% lebar dan tinggi yang tersisa di #content-area */
+            width: 100%;
+            flex-grow: 1; 
         }
         
         #main-content h2 {
@@ -133,32 +136,32 @@
             box-shadow: 0 3px 6px rgba(0, 123, 255, 0.3);
         }
 
-        /* KUNCI 4: Styling Error Message agar memenuhi ruang */
+        /* KUNCI 3: Styling Error Message agar memenuhi ruang penuh */
         .error-message {
              color: #dc3545; 
              text-align:center; 
-             /* Hapus padding dan set margin ke 0 */
+             /* Pastikan tidak ada margin/padding yang mendorong batas */
              padding: 0; 
              margin: 0; 
              background: #fff3f5; 
              border: 1px solid #dc3545;
-             border-radius: 0; /* Hapus sudut membulat */
-             height: 100%; /* Pastikan error message mengisi tingginya */
-             box-sizing: border-box; /* Untuk memastikan border 1px tidak menyebabkan overflow */
+             border-radius: 0; 
              
-             /* Menata konten error di tengah */
+             /* KUNCI PENTING: Ambil 100% tinggi yang tersedia */
+             height: 100%; 
+             width: 100%;
+             box-sizing: border-box; /* Agar border tidak menambah ukuran */
+             
+             /* Gunakan Flexbox untuk memusatkan teks error di dalam kotak yang full height */
              display: flex;
              flex-direction: column;
-             justify-content: center;
-             align-items: center;
+             justify-content: center; /* Pusat vertikal */
+             align-items: center; /* Pusat horizontal */
+             line-height: 1.6; /* Jarak baris yang lebih baik */
         }
         
-        .error-message h3 {
-            margin-bottom: 10px;
-        }
-        
-        .error-message p {
-            padding: 0 20px;
+        .error-message h3, .error-message p {
+            margin: 5px 0; /* Margin kecil untuk teks di dalam error box */
         }
     </style>
 </head>
@@ -191,7 +194,7 @@
 
     // Fungsi Utama untuk Memuat Halaman menggunakan AJAX
     function loadPage(page, button) {
-        // ... (Kode loading spinner tidak diubah) ...
+        // Tampilkan loading state
         contentArea.innerHTML = `
             <div style="text-align:center; padding:50px; color:var(--primary-color);">
                 <div class="spinner" style="border: 4px solid rgba(0, 123, 255, 0.1); border-top: 4px solid var(--primary-color); border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; margin: 0 auto 10px;"></div>
@@ -199,13 +202,13 @@
             </div>
         `;
         
+        // Animasi CSS untuk loading spinner
         if (!document.getElementById('spin-style')) {
             const style = document.createElement('style');
             style.id = 'spin-style';
             style.innerHTML = '@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }';
             document.head.appendChild(style);
         }
-        // ...
 
         fetch(page)
             .then(response => {
@@ -218,18 +221,17 @@
                 contentArea.innerHTML = html;
             })
             .catch(error => {
-                // Modifikasi Tampilan Error agar FULL HEIGHT
+                // Ketika error, seluruh innerHTML #main-content diganti dengan pesan error
                 contentArea.innerHTML = `<div class="error-message">
                                             <h3>Gagal Memuat Konten!</h3>
-                                            <p>${error.message}</p>
+                                            <p style="margin-bottom: 5px;">Failed to execute 'fetch' on Window: Failed to parse URL from ${page}</p>
                                             <p>Pastikan file <strong>${page}</strong> ada di folder yang sama.</p>
                                         </div>`;
                 console.error('Fetch error:', error);
             });
     }
 
-    // ... (Fungsi updateActiveButton dan Event Listener tidak diubah) ...
-
+    // Fungsi untuk Menandai Tombol Aktif
     function updateActiveButton(targetButton) {
         navButtons.forEach(button => {
             button.classList.remove('active');
@@ -237,6 +239,7 @@
         targetButton.classList.add('active');
     }
 
+    // Menambahkan Event Listener ke Tombol Navigasi
     navButtons.forEach(button => {
         button.addEventListener('click', function() {
             const page = this.getAttribute('data-page');
@@ -245,6 +248,7 @@
         });
     });
 
+    // Muat Halaman Awal saat Dokumen Siap
     document.addEventListener('DOMContentLoaded', () => {
         const initialButton = document.querySelector('.nav-button.active');
         const initialPage = initialButton.getAttribute('data-page');
