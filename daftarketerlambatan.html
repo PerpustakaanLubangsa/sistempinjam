@@ -6,17 +6,71 @@
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
 <style>
-body { margin:0; font-family:sans-serif; background:#e0f7fa; color:#006064; padding:20px; }
-h2 { text-align:center; color:#004d40; }
-table { width:100%; border-collapse: collapse; margin-top:20px; }
-th, td { border:1px solid #00bcd4; padding:10px; text-align:center; }
-th { background:#00bcd4; color:#fff; }
-tr:nth-child(even) { background:#b2ebf2; }
+/* --- MODERN & MINIMALIST STYLING with CYAN HEADER --- */
+body {
+    margin: 0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: #f4f7f6;
+    color: #333;
+    /* Padding diubah: top 10px, sisanya 20px */
+    padding: 10px 20px 20px 20px; 
+}
+h2 {
+    text-align: center;
+    color: #1f3a6a;
+    margin-bottom: 20px;
+    font-weight: 600;
+    height: 1.5em;
+    /* Mengurangi margin-top agar lebih dekat ke atas jika ada judul */
+    margin-top: 0; 
+}
+table {
+    width: 100%;
+    border-collapse: collapse;
+    /* Margin atas dihilangkan sepenuhnya (0px) untuk menempel ke atas */
+    margin-top: 0; 
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+    border-radius: 10px;
+    overflow: hidden;
+    background-color: #fff;
+}
+th, td {
+    border: none;
+    padding: 12px 15px;
+}
+th {
+    /* --- CYAN COLOR FOR HEADER (TH) --- */
+    background: #00bcd4; /* Bright Cyan */
+    color: #fff;
+    font-weight: 600;
+    border-bottom: 2px solid #0097a7;
+    text-align: center;
+}
+td {
+    border-bottom: 1px solid #eee;
+}
+tr:nth-child(even) {
+    background: #f9f9f9;
+}
+tr:hover {
+    background-color: #e6f7ff;
+}
+
+/* Specific Column Alignment for Better Readability */
+td:nth-child(-n+4), th:nth-child(-n+4) {
+    text-align: left;
+}
+td:nth-child(5), th:nth-child(5) {
+    text-align: center; /* Harus Kembali (Date) */
+}
+td:nth-child(6), th:nth-child(6), td:nth-child(7), th:nth-child(7) {
+    text-align: right; /* Keterlambatan, Denda (Numbers) */
+}
 </style>
 </head>
 <body>
 
-<h2>📕 Daftar Keterlambatan</h2>
+<h2></h2>
 <table>
   <thead>
     <tr>
