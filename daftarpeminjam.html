@@ -2,65 +2,173 @@
 <html lang="id">
 <head>
 <meta charset="UTF-8">
-<title>Daftar Peminjam</title>
+<title>Daftar Peminjam - Card Minimalis</title>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 <style>
-body { font-family: sans-serif; background: #e0f7fa; margin:0; padding:20px; color:#006064; }
-h2 { text-align:center; color:#004d40; }
-table { width:100%; border-collapse: collapse; margin-top:20px; }
-th, td { border:1px solid #00bcd4; padding:8px; text-align:center; }
-th { background:#00bcd4; color:#fff; }
-tr:nth-child(even) { background:#b2ebf2; }
-button { padding:4px 8px; border:none; border-radius:6px; cursor:pointer; }
-.kembali { background:#f44336; color:#fff; }
-.kembali:hover { background:#c62828; }
-.edit { background:#ffc107; color:#000; }
-.edit:hover { background:#e0a800; }
-.popup-overlay {
-  display:none; position:fixed; top:0; left:0; width:100%; height:100%;
-  background:rgba(0,0,0,0.5); justify-content:center; align-items:center;
+/* --- Gaya Dasar & Layout --- */
+body { 
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+    background: #f4f7f6; 
+    margin: 0; 
+    padding: 30px; 
+    color: #333; 
 }
-.popup {
-  background:#fff; padding:20px; border-radius:10px; width:300px; text-align:center;
+#searchContainer { 
+    margin-bottom: 30px; 
+    margin-top: 15px;
+    text-align: center; 
 }
-.popup input { width:90%; padding:5px; margin:5px 0; border:1px solid #00bcd4; border-radius:6px; }
+#searchInput {
+    padding: 12px 18px; 
+    border: 1px solid #ccc; 
+    border-radius: 25px; 
+    width: 90%; 
+    max-width: 500px; 
+    font-size: 16px; 
+    transition: border-color 0.3s, box-shadow 0.3s;
+}
+#searchInput:focus { 
+    border-color: #3498db; 
+    box-shadow: 0 0 8px rgba(52, 152, 219, 0.2); 
+    outline: none; 
+}
+
+/* --- Container Card --- */
+#peminjamContainer {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 25px;
+    padding: 0 10px;
+}
+
+/* --- Gaya Card Profil --- */
+.peminjam-card {
+    background: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 6px 15px rgba(0,0,0,0.1);
+    padding: 25px;
+    transition: transform 0.3s, box-shadow 0.3s;
+    border-left: 5px solid #3498db;
+}
+.peminjam-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.15);
+}
+
+.card-header {
+    border-bottom: 2px solid #eee;
+    padding-bottom: 15px;
+    margin-bottom: 15px;
+}
+
+.card-title {
+    font-size: 1.5em;
+    font-weight: 600;
+    color: #2c3e50;
+    margin: 0;
+}
+
+.card-subtitle {
+    font-size: 0.9em;
+    color: #7f8c8d;
+    margin-top: 5px;
+}
+
+.card-detail {
+    margin-bottom: 10px;
+}
+
+.card-detail strong {
+    font-weight: 500;
+    color: #3498db;
+    display: inline-block;
+    width: 130px;
+}
+
+.card-dates {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 15px;
+    padding-top: 10px;
+    border-top: 1px dashed #ecf0f1;
+    font-size: 0.95em;
+}
+.date-item {
+    text-align: center;
+    flex-grow: 1;
+}
+.date-item span {
+    display: block;
+    color: #7f8c8d;
+    font-size: 0.8em;
+}
+
+/* --- Tombol Aksi (Ikon + Teks) --- */
+.card-actions {
+    text-align: center;
+    margin-top: 25px;
+    padding-top: 15px;
+    border-top: 1px solid #eee;
+    display: flex; /* Menggunakan flexbox untuk penataan horizontal */
+    justify-content: space-around;
+}
+
+.action-btn {
+    padding: 8px 15px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 1em;
+    font-weight: 600;
+    margin: 0 5px;
+    transition: background-color 0.2s, transform 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px; /* Jarak antara ikon dan teks */
+}
+.action-btn i {
+    font-size: 1.1em;
+}
+
+.kembali-btn { 
+    background:#e74c3c; 
+    color:#fff; 
+}
+.kembali-btn:hover { 
+    background:#c0392b; 
+    transform: translateY(-2px);
+}
+
+.perpanjang-btn { 
+    background:#2ecc71; 
+    color:#fff; 
+}
+.perpanjang-btn:hover { 
+    background:#27ae60; 
+    transform: translateY(-2px);
+}
+
+/* --- Popup (Dihapus karena tombol edit dihapus) --- */
+/* Popup Edit Overlay dan kontennya dihapus dari HTML */
+
 </style>
 </head>
 <body>
 
-<h2>📚 Daftar Peminjam</h2>
-<table>
-  <thead>
-    <tr>
-      <th>Nama</th>
-      <th>Blok</th>
-      <th>Judul Buku</th>
-      <th>NIS</th>
-      <th>Kode Inventaris</th>
-      <th>Tanggal Pinjam</th>
-      <th>Tanggal Kembali</th>
-      <th>Aksi</th>
-    </tr>
-  </thead>
-  <tbody id="peminjamBody"></tbody>
-</table>
-
-<!-- Popup Edit -->
-<div class="popup-overlay" id="popupEdit">
-  <div class="popup">
-    <h3>Edit Tanggal</h3>
-    <label>Tanggal Pinjam</label><br>
-    <input type="date" id="editPinjam"><br>
-    <label>Tanggal Kembali</label><br>
-    <input type="date" id="editKembali"><br>
-    <button id="btnSimpanEdit">Simpan</button>
-    <button onclick="tutupPopup()">Batal</button>
-  </div>
+<div id="searchContainer">
+    <input type="text" id="searchInput" placeholder="Cari Nama, Judul Buku, NIS, atau Kode..." onkeyup="filterTable()">
 </div>
 
+<div id="peminjamContainer">
+    </div>
+
 <script>
+// --- Konfigurasi Firebase ---
 const firebaseConfig = {
+  // Ganti dengan konfigurasi Firebase Anda yang sebenarnya
   apiKey: "AIzaSyByw2om-sKHqgCWBDJcE7FEtONoUoJbn9M",
   authDomain: "traying-29bf4.firebaseapp.com",
   databaseURL: "https://traying-29bf4-default-rtdb.firebaseio.com",
@@ -71,64 +179,136 @@ const firebaseConfig = {
 };
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
-const tbody = document.getElementById("peminjamBody");
+const container = document.getElementById("peminjamContainer");
+const searchInput = document.getElementById("searchInput");
 
-let editKey = null;
+let allPeminjamanData = {};
 
 // Muat data real-time
 db.ref("peminjaman").on("value", snap => {
-  tbody.innerHTML = "";
+  allPeminjamanData = {};
   snap.forEach(child => {
-    const d = child.val();
-    const tr = document.createElement("tr");
-    tr.innerHTML = `
-      <td>${d.nama || '-'}</td>
-      <td>${d.blok || '-'}</td>
-      <td>${d.judul || '-'}</td>
-      <td>${d.nis || '-'}</td>
-      <td>${d.kode || '-'}</td>
-      <td>${d.tanggalPinjam || '-'}</td>
-      <td>${d.tanggalKembali || '-'}</td>
-      <td>
-        <button class="edit" onclick="bukaEdit('${child.key}','${d.tanggalPinjam}','${d.tanggalKembali}')">Edit</button>
-        <button class="kembali" onclick="kembalikan('${child.key}')">Kembalikan</button>
-      </td>
-    `;
-    tbody.appendChild(tr);
+    allPeminjamanData[child.key] = child.val();
   });
+  renderCards(allPeminjamanData);
 });
+
+// Render tampilan Card
+function renderCards(data) {
+  container.innerHTML = "";
+  for (const key in data) {
+    const d = data[key];
+    const card = document.createElement("div");
+    card.className = "peminjam-card";
+    
+    // Tentukan Judul dan Blok untuk Header Card
+    const cardHeaderHTML = `
+        <div class="card-header">
+            <p class="card-title"><i class="fas fa-user-tag" style="margin-right:8px; color:#3498db;"></i>${d.nama || '-'}</p>
+            <p class="card-subtitle">${d.blok || '-'} | NIS: ${d.nis || '-'}</p>
+        </div>
+    `;
+
+    // Detail Peminjaman
+    const detailHTML = `
+        <div class="card-detail"><i class="fas fa-book" style="margin-right:8px; color:#f39c12;"></i><strong>Judul Buku</strong>: ${d.judul || '-'}</div>
+        <div class="card-detail"><i class="fas fa-barcode" style="margin-right:8px; color:#95a5a6;"></i><strong>Kode Inventaris</strong>: ${d.kode || '-'}</div>
+    `;
+
+    // Tanggal
+    const datesHTML = `
+        <div class="card-dates">
+            <div class="date-item">
+                <i class="fas fa-calendar-alt" style="color:#2980b9;"></i>
+                <div style="font-weight:600;">${d.tanggalPinjam || '-'}</div>
+                <span>Tgl. Pinjam</span>
+            </div>
+            <div class="date-item">
+                <i class="fas fa-calendar-check" style="color:#e74c3c;"></i>
+                <div style="font-weight:600;">${d.tanggalKembali || '-'}</div>
+                <span>Tgl. Kembali</span>
+            </div>
+        </div>
+    `;
+
+    // Tombol Aksi (Ikon + Teks)
+    const actionsHTML = `
+        <div class="card-actions">
+            <button class="action-btn perpanjang-btn" onclick="perpanjang('${key}')">
+                <i class="fas fa-redo-alt"></i> Perpanjang
+            </button>
+            <button class="action-btn kembali-btn" onclick="kembalikan('${key}')">
+                <i class="fas fa-undo"></i> Kembalikan
+            </button>
+        </div>
+    `;
+    
+    card.innerHTML = cardHeaderHTML + detailHTML + datesHTML + actionsHTML;
+    container.appendChild(card);
+  }
+}
+
+// --- Fungsi Aksi (Kembalikan, Perpanjang) ---
 
 // Kembalikan buku
 function kembalikan(key) {
-  if(confirm("Apakah buku ini ingin dikembalikan?")){
-    db.ref("peminjaman/" + key).remove();
+  if(confirm("Apakah Anda yakin ingin mengembalikan buku ini?")){
+    db.ref("peminjaman/" + key).remove()
+      .then(() => console.log("Data berhasil dihapus"))
+      .catch(error => console.error("Error menghapus data: ", error));
   }
 }
 
-// Popup edit
-function bukaEdit(key, pinjam, kembali){
-  editKey = key;
-  document.getElementById("editPinjam").value = pinjam;
-  document.getElementById("editKembali").value = kembali;
-  document.getElementById("popupEdit").style.display = "flex";
+// Perpanjang peminjaman (5 hari dari hari ini)
+function perpanjang(key) {
+    if(confirm("Apakah Anda yakin ingin memperpanjang peminjaman ini hingga 5 hari dari hari ini?")) {
+        
+        const today = new Date();
+        
+        // Tambahkan 5 hari
+        today.setDate(today.getDate() + 5);
+
+        // Format ke YYYY-MM-DD
+        const newTglKembali = formatDate(today);
+
+        // Update di Firebase
+        db.ref("peminjaman/"+key).update({
+          tanggalKembali: newTglKembali
+        })
+        .then(() => alert(`Peminjaman berhasil diperpanjang hingga: ${newTglKembali}`))
+        .catch(error => console.error("Error memperpanjang data: ", error));
+    }
 }
 
-function tutupPopup(){
-  document.getElementById("popupEdit").style.display = "none";
+// Fungsi pembantu untuk memformat Date object menjadi string YYYY-MM-DD
+function formatDate(date) {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
 }
 
-// Simpan edit
-document.getElementById("btnSimpanEdit").addEventListener("click", ()=>{
-  const pinjam = document.getElementById("editPinjam").value;
-  const kembali = document.getElementById("editKembali").value;
-  if(editKey && pinjam && kembali){
-    db.ref("peminjaman/"+editKey).update({
-      tanggalPinjam: pinjam,
-      tanggalKembali: kembali
-    });
-    tutupPopup();
-  }
-});
+// --- FUNGSI EDIT DIHAPUS ---
+// Fungsi 'bukaEdit', 'tutupPopup', 'btnSimpanEdit' DIHAPUS karena tombol edit dihilangkan.
+
+// Fitur Pencarian (Filtering)
+function filterTable() {
+    const filter = searchInput.value.toLowerCase();
+    const filteredData = {};
+
+    for (const key in allPeminjamanData) {
+        const d = allPeminjamanData[key];
+        const searchableText = `${d.nama} ${d.blok} ${d.judul} ${d.nis} ${d.kode} ${d.tanggalPinjam} ${d.tanggalKembali}`.toLowerCase();
+        
+        if (searchableText.includes(filter)) {
+            filteredData[key] = d;
+        }
+    }
+    renderCards(filteredData);
+}
+
+// Panggil filterTable setiap kali input berubah
+searchInput.addEventListener('input', filterTable);
 </script>
 
 </body>
