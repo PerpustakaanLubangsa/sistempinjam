@@ -1,62 +1,106 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-<meta charset="UTF-8">
-<title>Manajemen Data</title>
-<style>
-body {margin:0;font-family:sans-serif;background:#e0f7fa;color:#00bcd4;}
-.container {display:flex;height:100vh;}
-.sidebar {
-    width:180px;
-    background:#000; /* hitam pekat */
-    border-right: 3px solid #00bcd4; /* garis cyan */
-    padding:15px;
-    overflow-y:auto;
-}
-.sidebar h3 {
-    margin-top:0;
-    color:#00bcd4;
-    font-size:16px;
-    text-align:center;
-}
-.item {
-    padding:10px;
-    margin:8px 0;
-    border-radius:6px;
-    background:#000;
-    border:1px solid #00bcd4;
-    color:#00bcd4;
-    cursor:pointer;
-    transition:0.2s;
-    text-align:center;
-    font-size:14px;
-}
-.item:hover, .item.active {
-    background:#00bcd4;
-    color:#000;
-}
-iframe {
-    flex:1;
-    border:none;
-    background:#fff;
-}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manajemen Data Perpustakaan - Tab</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* Variabel CSS */
+        :root {
+            --primary-color: #007bff; /* Biru Primer */
+            --primary-dark: #0056b3;
+            --background-app: #f4f7f9; 
+            --header-height: 55px; /* Ketinggian header yang lebih ringkas */
+            --text-dark: #343a40;
+            --shadow-subtle: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        body {
+            margin: 0;
+            font-family: 'Inter', sans-serif;
+            background: var(--background-app);
+            color: var(--text-dark);
+            height: 100vh;
+            overflow: hidden; /* Mencegah scroll pada body */
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* --- Header (Navigasi Tab) --- */
+        header {
+            height: var(--header-height);
+            background: #ffffff;
+            /* Padding atas dan bawah 0, hanya padding samping */
+            padding: 0 20px; 
+            box-shadow: var(--shadow-subtle);
+            flex-shrink: 0; 
+            
+            /* Flexbox untuk menata tab */
+            display: flex;
+            align-items: flex-end; /* Memastikan tab sejajar dengan bagian bawah header */
+            gap: 5px; /* Jarak antar tab */
+        }
+
+        /* --- Navigasi Tab Item --- */
+        .item {
+            padding: 10px 15px;
+            cursor: pointer;
+            color: var(--text-dark);
+            font-weight: 500;
+            transition: all 0.2s ease;
+            
+            /* Membuat tampilan seperti tab */
+            border-bottom: 3px solid transparent; /* Garis bawah transparan */
+            background: transparent;
+            border-top-left-radius: 6px;
+            border-top-right-radius: 6px;
+        }
+
+        .item:hover {
+            color: var(--primary-color);
+            background: #f1f1f1;
+        }
+        
+        /* Gaya Tab Aktif */
+        .item.active {
+            color: var(--primary-color);
+            font-weight: 700;
+            border-bottom: 3px solid var(--primary-color); /* Garis bawah biru tebal */
+            background: #f8f9fa; /* Latar belakang tab aktif sedikit berbeda */
+        }
+
+        /* --- Konten Utama (Iframe) --- */
+        iframe {
+            flex: 1; /* Mengambil sisa ruang vertikal */
+            width: 100%;
+            border: none;
+            background: #ffffff;
+        }
+    </style>
 </head>
 <body>
 
-<div class="container">
-    <div class="sidebar">
-        <h3>Manajemen</h3>
-        <div class="item active" onclick="loadPage(this,'keanggotaan.html')">Keanggotaan</div>
-        <div class="item" onclick="loadPage(this,'buku.html')">Buku</div>
+<header>
+    <div class="item active" data-page="keanggotaan.html" onclick="loadPage(this, 'keanggotaan.html')">
+        Keanggotaan
     </div>
-    <iframe id="contentFrame" src="keanggotaan.html"></iframe>
-</div>
+    <div class="item" data-page="buku.html" onclick="loadPage(this, 'buku.html')">
+        Buku
+    </div>
+    </header>
+
+<iframe id="contentFrame" src="keanggotaan.html"></iframe>
 
 <script>
 function loadPage(el, page) {
+    // 1. Hapus kelas 'active' dari semua item
     document.querySelectorAll('.item').forEach(i => i.classList.remove('active'));
+    
+    // 2. Tambahkan kelas 'active' ke elemen yang diklik
     el.classList.add('active');
+    
+    // 3. Muat halaman ke iframe
     document.getElementById('contentFrame').src = page;
 }
 </script>
