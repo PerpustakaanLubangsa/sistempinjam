@@ -1,79 +1,238 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-<meta charset="UTF-8">
-<title>Sistem Pinjam</title>
-<link rel="icon" type="image/png" href="logo.png">
-<style>
-body {
-    margin:0;
-    font-family:sans-serif;
-    background:#0a0a0a;
-    color:#0ff;
-}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistem Perpustakaan - Tanpa Scroll Halaman</title>
+    <link rel="icon" type="image/png" href="logo.png">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        /* Variabel CSS */
+        :root {
+            --primary-color: #007bff; 
+            --secondary-color: #6c757d; 
+            --background-light: #f4f7f9; 
+            --content-background: #ffffff; 
+            --header-height: 60px; /* Tentukan tinggi header */
+            --sidebar-width: 280px;
+            --text-dark: #343a40; 
+            --shadow-subtle: 0 2px 4px rgba(0, 0, 0, 0.08); 
+        }
 
-header {
-    background:#000;
-    color:#0ff;
-    padding:15px 20px;
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    box-shadow: 0 4px 6px rgba(0,255,255,0.3);
-}
+        /* 1. KUNCI: Mencegah scroll pada level HTML/Body */
+        html, body {
+            height: 100%;
+            margin: 0;
+            overflow: hidden; /* Mencegah scrolling halaman */
+        }
 
-header .logo {
-    font-size:1.5em;
-    font-weight:bold;
-}
+        body {
+            font-family: 'Roboto', sans-serif;
+            background: var(--background-light);
+            color: var(--text-dark);
+            /* Menggunakan Flexbox untuk tata letak vertikal dasar: Header dan Konten Utama */
+            display: flex;
+            flex-direction: column;
+        }
 
-header .nav {
-    display:flex;
-    gap:15px;
-}
+        /* --- Header (Branding) --- */
+        header {
+            height: var(--header-height);
+            background: var(--content-background);
+            color: var(--primary-color);
+            padding: 0 30px;
+            font-size: 1.6em;
+            font-weight: 700;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            display: flex;
+            align-items: center; /* Pusatkan teks secara vertikal */
+            flex-shrink: 0; /* Pastikan header tidak mengecil */
+        }
 
-header button {
-    background:#0ff;
-    color:#000;
-    border:none;
-    padding:8px 16px;
-    cursor:pointer;
-    font-weight:bold;
-    border-radius:5px;
-    transition:0.3s;
-}
+        /* --- Kontainer Utama (Konten + Sidebar) --- */
+        #main-container {
+            /* 2. KUNCI: Membuat kontainer ini mengambil sisa ruang vertikal */
+            flex-grow: 1; 
+            display: grid;
+            grid-template-columns: 1fr var(--sidebar-width);
+            overflow: hidden; /* Mencegah scrolling di sini */
+        }
 
-header button:hover {
-    background:#00ffff99;
-    transform: scale(1.05);
-}
+        /* --- Area Konten Utama --- */
+        #content-area {
+            padding: 30px;
+            overflow-y: auto; /* Memungkinkan scrolling HANYA di area konten ini jika dibutuhkan */
+        }
+        
+        #main-content {
+            background: var(--content-background);
+            /* Tinggi dihilangkan karena #content-area menangani scroll */
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: var(--shadow-subtle);
+            border: 1px solid #e0e0e0;
+        }
+        
+        #main-content h2 {
+            color: var(--primary-color);
+            border-bottom: 2px solid #e9ecef;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
 
-iframe {
-    width:100%;
-    height:90vh;
-    border:none;
-    background:#111;
-}
-</style>
+        /* --- Sidebar Kanan --- */
+        #sidebar {
+            background: var(--content-background);
+            padding: 20px;
+            /* 3. KUNCI: Membuat sidebar mengisi tinggi container #main-container */
+            height: 100%; 
+            border-left: 1px solid #dee2e6;
+            box-shadow: -2px 0 5px rgba(0, 0, 0, 0.05);
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            flex-shrink: 0; /* Pastikan sidebar tidak mengecil */
+            overflow-y: auto; /* Jika menu sidebar banyak, ia bisa scroll sendiri */
+        }
+
+        #sidebar h3 {
+            color: var(--secondary-color);
+            text-align: left;
+            margin-top: 10px;
+            margin-bottom: 25px;
+            font-weight: 500;
+            font-size: 1.1em;
+            padding-left: 10px;
+        }
+
+        /* Gaya Tombol Navigasi Sidebar */
+        .nav-button {
+            width: 100%;
+            background: none; 
+            color: var(--text-dark);
+            border: none;
+            padding: 12px 15px;
+            cursor: pointer;
+            font-weight: 400;
+            font-size: 1em;
+            border-radius: 6px;
+            transition: all 0.2s ease;
+            text-align: left;
+        }
+
+        .nav-button:hover {
+            background: #e9ecef; 
+            color: var(--primary-color);
+            font-weight: 500;
+        }
+
+        .nav-button.active {
+            background: var(--primary-color);
+            color: #ffffff; 
+            font-weight: 600;
+            box-shadow: 0 3px 6px rgba(0, 123, 255, 0.3);
+        }
+
+        .error-message {
+             color: #dc3545; 
+             text-align:center; 
+             padding:50px; 
+             background: #fff3f5; 
+             border: 1px solid #dc3545;
+             border-radius: 5px;
+        }
+    </style>
 </head>
 <body>
 
 <header>
-    <div class="logo">Sistem Perpustakaan</div>
-    <div class="nav">
-        <button onclick="loadPage('beranda.html')">Beranda</button>
-        <button onclick="loadPage('pinjam.html')">Pinjam</button>
-        <button onclick="loadPage('kembali.html')">Kembali</button>
-        <button onclick="loadPage('manajemen.html')">manajemen</button>
-    </div>
+    SISTEM PERPUSTAKAAN
 </header>
 
-<iframe id="contentFrame" src="beranda.html"></iframe>
+<div id="main-container">
+    <div id="content-area">
+        <div id="main-content">
+            <h2>Selamat Datang</h2>
+            <p>Aplikasi Sistem Perpustakaan Modern. Halaman ini diatur agar hanya area konten yang bisa digulir.</p>
+        </div>
+    </div>
+
+    <div id="sidebar">
+        <h3>MENU APLIKASI</h3>
+        <button data-page="beranda.html" class="nav-button active">Beranda</button>
+        <button data-page="pinjam.html" class="nav-button">Pinjam Buku</button>
+        <button data-page="kembali.html" class="nav-button">Pengembalian</button>
+        <button data-page="manajemen.html" class="nav-button">Manajemen Data</button>
+    </div>
+</div>
 
 <script>
-function loadPage(page){
-    document.getElementById('contentFrame').src = page;
-}
+    const contentArea = document.getElementById('main-content');
+    const navButtons = document.querySelectorAll('.nav-button');
+
+    // Fungsi Utama untuk Memuat Halaman menggunakan AJAX
+    function loadPage(page, button) {
+        // Tampilkan loading state
+        contentArea.innerHTML = `
+            <div style="text-align:center; padding:50px; color:var(--primary-color);">
+                <div class="spinner" style="border: 4px solid rgba(0, 123, 255, 0.1); border-top: 4px solid var(--primary-color); border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; margin: 0 auto 10px;"></div>
+                Memuat ${button ? button.textContent.toUpperCase() : 'Konten'}...
+            </div>
+        `;
+        
+        // Animasi CSS untuk loading spinner
+        if (!document.getElementById('spin-style')) {
+            const style = document.createElement('style');
+            style.id = 'spin-style';
+            style.innerHTML = '@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }';
+            document.head.appendChild(style);
+        }
+
+        fetch(page)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`Gagal memuat halaman: ${response.status} ${response.statusText}`);
+                }
+                return response.text();
+            })
+            .then(html => {
+                contentArea.innerHTML = html;
+            })
+            .catch(error => {
+                contentArea.innerHTML = `<div class="error-message">
+                                            <h3>Gagal Memuat Konten!</h3>
+                                            <p>${error.message}</p>
+                                            <p>Pastikan file <strong>${page}</strong> ada di folder yang sama.</p>
+                                        </div>`;
+                console.error('Fetch error:', error);
+            });
+    }
+
+    // Fungsi untuk Menandai Tombol Aktif
+    function updateActiveButton(targetButton) {
+        navButtons.forEach(button => {
+            button.classList.remove('active');
+        });
+        targetButton.classList.add('active');
+    }
+
+    // Menambahkan Event Listener ke Tombol Navigasi
+    navButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const page = this.getAttribute('data-page');
+            loadPage(page, this);
+            updateActiveButton(this);
+        });
+    });
+
+    // Muat Halaman Awal saat Dokumen Siap
+    document.addEventListener('DOMContentLoaded', () => {
+        const initialButton = document.querySelector('.nav-button.active');
+        const initialPage = initialButton.getAttribute('data-page');
+        
+        loadPage(initialPage, initialButton);
+    });
+
 </script>
 
 </body>
