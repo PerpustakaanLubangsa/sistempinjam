@@ -2,7 +2,7 @@
 <html lang="id">
 <head>
 <meta charset="UTF-8">
-<title>Daftar Peminjam - Card Minimalis</title>
+<title>Daftar Peminjam - Card Minimalis (Ditingkatkan)</title>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
@@ -14,6 +14,11 @@ body {
     margin: 0; 
     padding: 30px; 
     color: #333; 
+}
+h1 {
+    text-align: center;
+    color: #2c3e50;
+    margin-bottom: 20px;
 }
 #searchContainer { 
     margin-bottom: 30px; 
@@ -49,13 +54,20 @@ body {
     border-radius: 12px;
     box-shadow: 0 6px 15px rgba(0,0,0,0.1);
     padding: 25px;
-    transition: transform 0.3s, box-shadow 0.3s;
+    transition: box-shadow 0.3s, transform 0.2s; 
     border-left: 5px solid #3498db;
+    position: relative; 
 }
 .peminjam-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 10px 20px rgba(0,0,0,0.15);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+    transform: translateY(-3px);
 }
+
+/* Menandai card yang terlambat */
+.peminjam-card.terlambat {
+    border-left: 5px solid #e74c3c; /* Border merah untuk keterlambatan */
+}
+
 
 .card-header {
     border-bottom: 2px solid #eee;
@@ -105,13 +117,35 @@ body {
     font-size: 0.8em;
 }
 
+/* --- Gaya Pemberitahuan Denda --- */
+.denda-notification {
+    background-color: #e74c3c; /* Merah */
+    color: #fff;
+    padding: 10px 15px;
+    border-radius: 8px;
+    margin-top: 15px;
+    font-weight: 700;
+    text-align: center;
+    box-shadow: 0 4px 8px rgba(231, 76, 60, 0.3);
+    animation: pulse 1.5s infinite; 
+}
+.denda-notification i {
+    margin-right: 8px;
+}
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.02); }
+    100% { transform: scale(1); }
+}
+
+
 /* --- Tombol Aksi (Ikon + Teks) --- */
 .card-actions {
     text-align: center;
     margin-top: 25px;
     padding-top: 15px;
     border-top: 1px solid #eee;
-    display: flex; /* Menggunakan flexbox untuk penataan horizontal */
+    display: flex; 
     justify-content: space-around;
 }
 
@@ -123,23 +157,26 @@ body {
     font-size: 1em;
     font-weight: 600;
     margin: 0 5px;
-    transition: background-color 0.2s, transform 0.2s;
+    transition: background-color 0.2s, transform 0.2s, box-shadow 0.2s; 
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 8px; /* Jarak antara ikon dan teks */
+    gap: 8px; 
 }
-.action-btn i {
-    font-size: 1.1em;
+.action-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
 }
 
 .kembali-btn { 
     background:#e74c3c; 
     color:#fff; 
 }
+.peminjam-card.terlambat .kembali-btn {
+    background: #c0392b; 
+}
 .kembali-btn:hover { 
     background:#c0392b; 
-    transform: translateY(-2px);
 }
 
 .perpanjang-btn { 
@@ -148,136 +185,228 @@ body {
 }
 .perpanjang-btn:hover { 
     background:#27ae60; 
-    transform: translateY(-2px);
 }
 
-/* --- Popup (Dihapus karena tombol edit dihapus) --- */
-/* Popup Edit Overlay dan kontennya dihapus dari HTML */
+/* --- Gaya Status Message --- */
+#statusMessage {
+    text-align: center; 
+    margin-top: 50px; 
+    font-size: 1.1em; 
+    color: #7f8c8d; 
+    display: none;
+    padding: 20px;
+    border-radius: 8px;
+    background: #e9ecef;
+    max-width: 500px;
+    margin-left: auto;
+    margin-right: auto;
+}
+#statusMessage .fas {
+    margin-right: 10px;
+    color: #3498db;
+}
 
+
+/* --- START OF MODAL STYLES --- */
+#customModal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.6); 
+    display: none; 
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    opacity: 0;
+    transition: opacity 0.3s ease-in-out;
+}
+
+#customModal.show {
+    display: flex;
+    opacity: 1;
+}
+
+.modal-content {
+    background: #fff;
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    width: 90%;
+    max-width: 400px;
+    text-align: center;
+    transform: translateY(-50px);
+    transition: transform 0.3s ease-in-out;
+}
+
+#customModal.show .modal-content {
+    transform: translateY(0);
+}
+
+.modal-icon {
+    font-size: 3em;
+    color: #f39c12; 
+    margin-bottom: 15px;
+}
+.modal-icon.danger {
+    color: #e74c3c; 
+}
+.modal-icon.success {
+    color: #2ecc71; 
+}
+
+.modal-message {
+    font-size: 1.1em;
+    line-height: 1.5;
+    margin-bottom: 25px;
+    white-space: pre-wrap; /* Penting untuk baris baru (\n) */
+}
+.modal-message strong {
+    font-weight: 700;
+    color: #34495e;
+}
+
+.modal-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+}
+
+.modal-btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s, box-shadow 0.2s;
+    min-width: 100px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+}
+
+#confirmBtn {
+    background-color: #3498db;
+    color: #fff;
+}
+#confirmBtn:focus {
+    box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.5);
+    outline: none;
+}
+#confirmBtn:hover {
+    background-color: #2980b9;
+}
+
+#cancelBtn {
+    background-color: #ecf0f1;
+    color: #333;
+}
+#cancelBtn:hover {
+    background-color: #bdc3c7;
+}
 </style>
 </head>
 <body>
 
+<h1>Daftar Peminjam Aktif</h1>
+
+<div id="customModal">
+    <div class="modal-content">
+        <i id="modalIcon" class="modal-icon fas fa-question-circle"></i>
+        <div id="modalMessage" class="modal-message"></div>
+        <div class="modal-buttons">
+            <button id="cancelBtn" class="modal-btn"><i class="fas fa-times"></i> Batal</button>
+            <button id="confirmBtn" class="modal-btn"><i class="fas fa-check"></i> Konfirmasi</button>
+        </div>
+    </div>
+</div>
+
 <div id="searchContainer">
-    <input type="text" id="searchInput" placeholder="Cari Nama, Judul Buku, NIS, atau Kode..." onkeyup="filterTable()">
+    <input type="text" id="searchInput" placeholder="Cari Nama, Judul Buku, NIS, atau Kode..." oninput="filterTable()">
 </div>
 
 <div id="peminjamContainer">
     </div>
 
+<div id="statusMessage" style="text-align: center; margin-top: 50px; font-size: 1.1em; color: #7f8c8d; display: none;">
+    </div>
 <script>
 // --- Konfigurasi Firebase ---
 const firebaseConfig = {
-  // Ganti dengan konfigurasi Firebase Anda yang sebenarnya
-  apiKey: "AIzaSyByw2om-sKHqgCWBDJcE7FEtONoUoJbn9M",
-  authDomain: "traying-29bf4.firebaseapp.com",
-  databaseURL: "https://traying-29bf4-default-rtdb.firebaseio.com",
-  projectId: "traying-29bf4",
-  storageBucket: "traying-29bf4.appspot.com",
-  messagingSenderId: "42080663883",
-  appId: "1:42080663883:web:58f28d5d1164204457d030"
+    // Ganti dengan konfigurasi Firebase Anda yang sebenarnya
+    apiKey: "AIzaSyByw2om-sKHqgCWBDJcE7FEtONoUoJbn9M",
+    authDomain: "traying-29bf4.firebaseapp.com",
+    databaseURL: "https://traying-29bf4-default-rtdb.firebaseio.com",
+    projectId: "traying-29bf4",
+    storageBucket: "traying-29bf4.appspot.com",
+    messagingSenderId: "42080663883",
+    appId: "1:42080663883:web:58f28d5d1164204457d030"
 };
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 const container = document.getElementById("peminjamContainer");
 const searchInput = document.getElementById("searchInput");
+const statusMessage = document.getElementById('statusMessage');
 
 let allPeminjamanData = {};
+const DENDA_PER_HARI = 1000; 
+
+// Elemen Modal
+const customModal = document.getElementById('customModal');
+const modalMessage = document.getElementById('modalMessage');
+const modalIcon = document.getElementById('modalIcon');
+// Ambil tombol sebagai variabel global
+const confirmBtn = document.getElementById('confirmBtn'); 
+const cancelBtn = document.getElementById('cancelBtn');
+
+let currentConfirmAction = () => {}; // Variabel untuk menyimpan aksi konfirmasi
+let keydownListener; // Variabel untuk menyimpan fungsi keydown agar bisa dihapus
+
+/**
+ * Fungsi untuk menampilkan pesan status (Loading, Data Kosong, Pencarian Kosong)
+ */
+function showStatus(message = '', icon = '', isVisible = true) {
+    if (isVisible) {
+        statusMessage.innerHTML = `<i class="${icon}"></i> ${message}`;
+        statusMessage.style.display = 'block';
+        container.style.display = 'none'; // Sembunyikan card container
+    } else {
+        statusMessage.style.display = 'none';
+        container.style.display = 'grid'; // Tampilkan kembali grid card
+    }
+}
+
 
 // Muat data real-time
+showStatus("Memuat data...", 'fas fa-spinner fa-spin', true); 
+
 db.ref("peminjaman").on("value", snap => {
-  allPeminjamanData = {};
-  snap.forEach(child => {
-    allPeminjamanData[child.key] = child.val();
-  });
-  renderCards(allPeminjamanData);
+    allPeminjamanData = {};
+    if (snap.exists()) {
+        snap.forEach(child => {
+            allPeminjamanData[child.key] = child.val();
+        });
+        filterTable(); 
+        
+    } else {
+        allPeminjamanData = {};
+        renderCards({}); 
+        showStatus("Tidak ada data peminjaman aktif.", 'fas fa-inbox', true);
+    }
+}, error => {
+    console.error("Error loading data from Firebase:", error);
+    showStatus(`Gagal memuat data: ${error.message}`, 'fas fa-server', true);
 });
 
-// Render tampilan Card
-function renderCards(data) {
-  container.innerHTML = "";
-  for (const key in data) {
-    const d = data[key];
-    const card = document.createElement("div");
-    card.className = "peminjam-card";
-    
-    // Tentukan Judul dan Blok untuk Header Card
-    const cardHeaderHTML = `
-        <div class="card-header">
-            <p class="card-title"><i class="fas fa-user-tag" style="margin-right:8px; color:#3498db;"></i>${d.nama || '-'}</p>
-            <p class="card-subtitle">${d.blok || '-'} | NIS: ${d.nis || '-'}</p>
-        </div>
-    `;
-
-    // Detail Peminjaman
-    const detailHTML = `
-        <div class="card-detail"><i class="fas fa-book" style="margin-right:8px; color:#f39c12;"></i><strong>Judul Buku</strong>: ${d.judul || '-'}</div>
-        <div class="card-detail"><i class="fas fa-barcode" style="margin-right:8px; color:#95a5a6;"></i><strong>Kode Inventaris</strong>: ${d.kode || '-'}</div>
-    `;
-
-    // Tanggal
-    const datesHTML = `
-        <div class="card-dates">
-            <div class="date-item">
-                <i class="fas fa-calendar-alt" style="color:#2980b9;"></i>
-                <div style="font-weight:600;">${d.tanggalPinjam || '-'}</div>
-                <span>Tgl. Pinjam</span>
-            </div>
-            <div class="date-item">
-                <i class="fas fa-calendar-check" style="color:#e74c3c;"></i>
-                <div style="font-weight:600;">${d.tanggalKembali || '-'}</div>
-                <span>Tgl. Kembali</span>
-            </div>
-        </div>
-    `;
-
-    // Tombol Aksi (Ikon + Teks)
-    const actionsHTML = `
-        <div class="card-actions">
-            <button class="action-btn perpanjang-btn" onclick="perpanjang('${key}')">
-                <i class="fas fa-redo-alt"></i> Perpanjang
-            </button>
-            <button class="action-btn kembali-btn" onclick="kembalikan('${key}')">
-                <i class="fas fa-undo"></i> Kembalikan
-            </button>
-        </div>
-    `;
-    
-    card.innerHTML = cardHeaderHTML + detailHTML + datesHTML + actionsHTML;
-    container.appendChild(card);
-  }
-}
-
-// --- Fungsi Aksi (Kembalikan, Perpanjang) ---
-
-// Kembalikan buku
-function kembalikan(key) {
-  if(confirm("Apakah Anda yakin ingin mengembalikan buku ini?")){
-    db.ref("peminjaman/" + key).remove()
-      .then(() => console.log("Data berhasil dihapus"))
-      .catch(error => console.error("Error menghapus data: ", error));
-  }
-}
-
-// Perpanjang peminjaman (5 hari dari hari ini)
-function perpanjang(key) {
-    if(confirm("Apakah Anda yakin ingin memperpanjang peminjaman ini hingga 5 hari dari hari ini?")) {
-        
-        const today = new Date();
-        
-        // Tambahkan 5 hari
-        today.setDate(today.getDate() + 5);
-
-        // Format ke YYYY-MM-DD
-        const newTglKembali = formatDate(today);
-
-        // Update di Firebase
-        db.ref("peminjaman/"+key).update({
-          tanggalKembali: newTglKembali
-        })
-        .then(() => alert(`Peminjaman berhasil diperpanjang hingga: ${newTglKembali}`))
-        .catch(error => console.error("Error memperpanjang data: ", error));
-    }
+// Fungsi pembantu untuk memformat Rupiah
+function formatRupiah(angka) {
+    if (typeof angka !== 'number' || angka < 0) return 'Rp0';
+    const reverse = Math.floor(angka).toString().split('').reverse().join('');
+    const ribuan = reverse.match(/\d{1,3}/g);
+    const result = ribuan.join('.').split('').reverse().join('');
+    return 'Rp' + result;
 }
 
 // Fungsi pembantu untuk memformat Date object menjadi string YYYY-MM-DD
@@ -288,12 +417,243 @@ function formatDate(date) {
     return `${year}-${month}-${day}`;
 }
 
-// --- FUNGSI EDIT DIHAPUS ---
-// Fungsi 'bukaEdit', 'tutupPopup', 'btnSimpanEdit' DIHAPUS karena tombol edit dihilangkan.
+// Fungsi utama untuk menghitung denda (Tidak Berubah)
+function hitungDenda(tanggalKembaliStr) {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); 
+    
+    const [year, month, day] = tanggalKembaliStr.split('-').map(Number);
+    const tglKembali = new Date(year, month - 1, day);
+    tglKembali.setHours(0, 0, 0, 0); 
+
+    const selisihMs = today.getTime() - tglKembali.getTime();
+    const hariTerlambat = Math.ceil(selisihMs / (1000 * 60 * 60 * 24)); 
+
+    if (hariTerlambat > 0) {
+        const totalDenda = hariTerlambat * DENDA_PER_HARI;
+        return {
+            terlambat: true,
+            hari: hariTerlambat,
+            denda: totalDenda,
+            dendaFormatted: formatRupiah(totalDenda)
+        };
+    } else {
+        return {
+            terlambat: false,
+            hari: 0,
+            denda: 0
+        };
+    }
+}
+
+
+// Render tampilan Card (Tidak Berubah)
+function renderCards(data) {
+    container.innerHTML = "";
+    const keys = Object.keys(data);
+
+    if (keys.length === 0) {
+        const filter = searchInput.value.toLowerCase().trim();
+        if (filter.length > 0 && Object.keys(allPeminjamanData).length > 0) {
+             showStatus(`Tidak ditemukan hasil untuk "${filter}".`, 'fas fa-search-minus', true);
+        }
+        return;
+    }
+    
+    showStatus(null, null, false);
+
+    for (const key in data) {
+        const d = data[key];
+        const card = document.createElement("div");
+        card.className = "peminjam-card";
+        
+        const dendaInfo = hitungDenda(d.tanggalKembali);
+        let dendaHTML = '';
+        
+        if (dendaInfo.terlambat) {
+            card.classList.add('terlambat');
+            dendaHTML = `
+                <div class="denda-notification">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    TERLAMBAT ${dendaInfo.hari} HARI! 
+                    <br>Denda: ${dendaInfo.dendaFormatted}
+                </div>
+            `;
+        }
+
+        const cardHeaderHTML = `
+            <div class="card-header">
+                <p class="card-title"><i class="fas fa-user-tag" style="margin-right:8px; color:#3498db;"></i>${d.nama || '-'}</p>
+                <p class="card-subtitle">${d.blok || '-'} | NIS: ${d.nis || '-'}</p>
+            </div>
+        `;
+
+        const detailHTML = `
+            <div class="card-detail"><i class="fas fa-book" style="margin-right:8px; color:#f39c12;"></i><strong>Judul Buku</strong>: ${d.judul || '-'}</div>
+            <div class="card-detail"><i class="fas fa-barcode" style="margin-right:8px; color:#95a5a6;"></i><strong>Kode Inventaris</strong>: ${d.kode || '-'}</div>
+        `;
+
+        const datesHTML = `
+            <div class="card-dates">
+                <div class="date-item">
+                    <i class="fas fa-calendar-alt" style="color:#2980b9;"></i>
+                    <div style="font-weight:600;">${d.tanggalPinjam || '-'}</div>
+                    <span>Tgl. Pinjam</span>
+                </div>
+                <div class="date-item">
+                    <i class="fas fa-calendar-check" style="color:#e74c3c;"></i>
+                    <div style="font-weight:600;">${d.tanggalKembali || '-'}</div>
+                    <span>Tgl. Kembali</span>
+                </div>
+            </div>
+        `;
+
+        const actionsHTML = `
+            <div class="card-actions">
+                <button class="action-btn perpanjang-btn" onclick="handlePerpanjang('${key}')">
+                    <i class="fas fa-redo-alt"></i> Perpanjang
+                </button>
+                <button class="action-btn kembali-btn" onclick="handleKembalikan('${key}', ${dendaInfo.denda})">
+                    <i class="fas fa-undo"></i> Kembalikan
+                </button>
+            </div>
+        `;
+        
+        card.innerHTML = cardHeaderHTML + detailHTML + datesHTML + dendaHTML + actionsHTML;
+        container.appendChild(card);
+    }
+}
+
+
+// --- LOGIKA MODAL KUSTOM (DIPERBAIKI TOTAL BUG POP-UP) ---
+
+/**
+ * Fungsi untuk menampilkan Modal Kustom
+ */
+function showCustomModal(message, onConfirm, isDanger = false, isAlert = false) {
+    modalMessage.innerHTML = message.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>'); 
+    currentConfirmAction = onConfirm; 
+
+    // 1. Atur Tampilan Ikon dan Tombol
+    modalIcon.className = 'modal-icon fas';
+    modalIcon.classList.remove('danger', 'success', 'fa-question-circle', 'fa-exclamation-triangle', 'fa-info-circle');
+
+    if (isAlert) {
+        modalIcon.classList.add('fa-info-circle', 'success');
+        confirmBtn.innerHTML = '<i class="fas fa-check"></i> OK';
+        cancelBtn.style.display = 'none';
+        confirmBtn.focus();
+    } else {
+        modalIcon.classList.add('fa-question-circle');
+        confirmBtn.innerHTML = '<i class="fas fa-check"></i> Konfirmasi';
+        cancelBtn.style.display = 'inline-block';
+        if (isDanger) {
+            modalIcon.classList.add('danger', 'fa-exclamation-triangle'); 
+            modalIcon.classList.remove('fa-question-circle');
+        }
+        cancelBtn.focus();
+    }
+
+    // 2. Bersihkan Event Listeners Lama
+    confirmBtn.removeEventListener('click', handleConfirmClick);
+    cancelBtn.removeEventListener('click', closeModal);
+    document.removeEventListener('keydown', keydownListener);
+
+    // 3. Tambahkan Event Listeners Baru
+    confirmBtn.addEventListener('click', handleConfirmClick);
+    cancelBtn.addEventListener('click', closeModal);
+
+    // Tangani KeyDown (Enter dan Escape)
+    keydownListener = (e) => {
+        // Cek apakah modal terlihat sebelum beraksi
+        if (!customModal.classList.contains('show')) return; 
+
+        if (e.key === 'Escape') {
+            e.preventDefault();
+            closeModal();
+        } else if (e.key === 'Enter') {
+            e.preventDefault();
+            handleConfirmClick();
+        }
+    };
+    document.addEventListener('keydown', keydownListener);
+    
+    // 4. Tampilkan Modal
+    customModal.classList.add('show');
+}
+
+// Fungsi pembantu untuk menutup modal
+function closeModal() {
+    customModal.classList.remove('show');
+    // Hapus listener keydown saat modal ditutup
+    document.removeEventListener('keydown', keydownListener);
+}
+
+// Fungsi pembantu untuk menangani klik konfirmasi
+function handleConfirmClick() {
+    closeModal();
+    currentConfirmAction(); // Panggil aksi yang tersimpan
+}
+
+// Fungsi alert kustom
+function customAlert(message) {
+    showCustomModal(message, () => {}, false, true); 
+}
+
+// --- FUNGSI AKSI (Perbaikan Logika Perpanjang) ---
+
+// Fungsi core untuk mengembalikan buku
+function kembalikan(key) {
+    db.ref("peminjaman/" + key).remove()
+    .then(() => customAlert("Pengembalian buku berhasil diproses!"))
+    .catch(error => customAlert(`Error menghapus data: ${error.message}`));
+}
+
+// Handler untuk tombol Kembalikan (Menggunakan fungsi modal yang diperbaiki)
+function handleKembalikan(key, denda) {
+    if (!allPeminjamanData[key]) {
+         return customAlert("Error: Data peminjaman tidak ditemukan.");
+    }
+    
+    let konfirmasiPesan = "Apakah Anda yakin ingin mengembalikan buku ini?";
+    let isDanger = false;
+    
+    if (denda > 0) {
+        konfirmasiPesan = `Buku terlambat! \nTotal denda yang harus dibayar: **${formatRupiah(denda)}**.\n\nApakah Anda yakin ingin menyelesaikan pengembalian ini?`;
+        isDanger = true;
+    }
+
+    showCustomModal(konfirmasiPesan, () => kembalikan(key), isDanger);
+}
+
+// Handler untuk tombol Perpanjang (Logika: 5 hari dari HARI INI)
+function handlePerpanjang(key) {
+    const dataPeminjam = allPeminjamanData[key];
+    if (!dataPeminjam) return customAlert("Error: Data peminjaman tidak ditemukan.");
+
+    const today = new Date();
+    // Normalisasi tanggal perpanjangan agar tidak dipengaruhi waktu saat ini
+    today.setHours(0, 0, 0, 0); 
+    today.setDate(today.getDate() + 5); 
+
+    const newTglKembali = formatDate(today);
+    const tglKembaliLamaStr = dataPeminjam.tanggalKembali;
+
+    const konfirmasiPesan = `Tanggal kembali saat ini: **${tglKembaliLamaStr}**.\n\nPerpanjangan dihitung 5 hari dari hari ini.\n\nApakah Anda yakin ingin memperpanjang peminjaman ini hingga:\n\n**${newTglKembali}**?`;
+    
+    showCustomModal(konfirmasiPesan, () => {
+        // Update di Firebase
+        db.ref("peminjaman/"+key).update({
+            tanggalKembali: newTglKembali
+        })
+        .then(() => customAlert(`Peminjaman berhasil diperpanjang!\nTanggal kembali baru: **${newTglKembali}**`))
+        .catch(error => customAlert(`Error memperpanjang data: ${error.message}`));
+    }, false); 
+}
 
 // Fitur Pencarian (Filtering)
 function filterTable() {
-    const filter = searchInput.value.toLowerCase();
+    const filter = searchInput.value.toLowerCase().trim();
     const filteredData = {};
 
     for (const key in allPeminjamanData) {
@@ -307,8 +667,7 @@ function filterTable() {
     renderCards(filteredData);
 }
 
-// Panggil filterTable setiap kali input berubah
-searchInput.addEventListener('input', filterTable);
+// searchInput.addEventListener('input', filterTable); // Sudah ada di HTML
 </script>
 
 </body>
