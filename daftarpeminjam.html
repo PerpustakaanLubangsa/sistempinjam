@@ -525,7 +525,7 @@ function renderCards(data) {
 }
 
 
-// --- LOGIKA MODAL KUSTOM (DIPERBAIKI TOTAL BUG POP-UP) ---
+// --- LOGIKA MODAL KUSTOM ---
 
 /**
  * Fungsi untuk menampilkan Modal Kustom
@@ -600,7 +600,7 @@ function customAlert(message) {
     showCustomModal(message, () => {}, false, true); 
 }
 
-// --- FUNGSI AKSI (Perbaikan Logika Perpanjang) ---
+// --- FUNGSI AKSI ---
 
 // Fungsi core untuk mengembalikan buku
 function kembalikan(key) {
@@ -626,7 +626,7 @@ function handleKembalikan(key, denda) {
     showCustomModal(konfirmasiPesan, () => kembalikan(key), isDanger);
 }
 
-// Handler untuk tombol Perpanjang (Logika: 5 hari dari HARI INI)
+// Handler untuk tombol Perpanjang (Logika BARU: 4 hari dari HARI INI)
 function handlePerpanjang(key) {
     const dataPeminjam = allPeminjamanData[key];
     if (!dataPeminjam) return customAlert("Error: Data peminjaman tidak ditemukan.");
@@ -634,12 +634,15 @@ function handlePerpanjang(key) {
     const today = new Date();
     // Normalisasi tanggal perpanjangan agar tidak dipengaruhi waktu saat ini
     today.setHours(0, 0, 0, 0); 
-    today.setDate(today.getDate() + 5); 
+    
+    // PERBAIKAN: Menambah 4 hari dari tanggal hari ini. (5 hari - 1 hari = 4 hari)
+    today.setDate(today.getDate() + 4); 
 
     const newTglKembali = formatDate(today);
     const tglKembaliLamaStr = dataPeminjam.tanggalKembali;
 
-    const konfirmasiPesan = `Tanggal kembali saat ini: **${tglKembaliLamaStr}**.\n\nPerpanjangan dihitung 5 hari dari hari ini.\n\nApakah Anda yakin ingin memperpanjang peminjaman ini hingga:\n\n**${newTglKembali}**?`;
+    // Perbarui pesan konfirmasi untuk mencerminkan perubahan
+    const konfirmasiPesan = `Tanggal kembali saat ini: **${tglKembaliLamaStr}**.\n\nPerpanjangan dihitung **4 hari dari hari ini**.\n\nApakah Anda yakin ingin memperpanjang peminjaman ini hingga:\n\n**${newTglKembali}**?`;
     
     showCustomModal(konfirmasiPesan, () => {
         // Update di Firebase
