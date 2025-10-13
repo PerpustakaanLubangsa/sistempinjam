@@ -2,104 +2,291 @@
 <html lang="id">
 <head>
 <meta charset="UTF-8">
-<title>Sistem Peminjaman Buku</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sistem Peminjaman Buku Modern (Cyan Aksen)</title>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
 <style>
+/* --- Warna Aksen Cyan Palet --- */
+/* Primary Cyan: #00bcd4 */
+/* Dark Cyan: #0097a7 */
+/* Light Cyan: #e0f7fa */
+
+/* --- Global Styles --- */
 body {
-  font-family: sans-serif;
-  background: #e0f7fa;
-  margin:0;
-  padding:20px;
-  color:#006064;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background: #f0f4f8; /* Light modern background */
+  margin: 0;
+  padding: 30px;
+  color: #263238; 
 }
-.container{
-  max-width:800px;
-  margin:auto;
-  background:#fff;
-  padding:20px;
-  border-radius:10px;
-  box-shadow:0 0 8px rgba(0,0,0,0.1);
+
+.container {
+  max-width: 900px;
+  margin: auto;
+  background: #ffffff;
+  padding: 30px;
+  border-radius: 12px;
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.05);
 }
-input, button{
-  padding:8px;
-  margin:5px 0;
-  border-radius:6px;
-  border:1px solid #00bcd4;
+
+/* --- JUDUL (Modern, Rata Tengah, Tanpa Emote) --- */
+.header-container {
+    padding-bottom: 20px;
+    margin-bottom: 30px;
+    text-align: center; 
 }
-button{
-  cursor:pointer;
-  background:#00bcd4;
-  color:#fff;
-  border:none;
+
+.main-title {
+    color: #263238; 
+    font-size: 2.5em;
+    font-weight: 300; 
+    margin: 0;
+    padding-bottom: 0 !important;
+    border-bottom: none !important; 
 }
-button:hover{background:#0097a7;}
-#profil{
-  margin:15px 0;
-  padding:10px;
-  background:#e0f2f1;
-  border-radius:6px;
+
+.title-underline {
+    width: 120px; 
+    height: 4px;
+    background: #00bcd4; /* Aksen Cyan */
+    margin: 8px auto 0 auto; 
+    border-radius: 2px;
 }
-.tabs{display:flex;margin-top:10px;border-bottom:2px solid #00bcd4;}
-.tab{
-  flex:1;text-align:center;padding:10px;cursor:pointer;background:#b2ebf2;
+/* --- End Judul Style --- */
+
+/* --- Form Elements --- */
+label {
+  display: block;
+  margin-top: 15px;
+  margin-bottom: 5px;
+  font-weight: 600;
+  color: #00bcd4; /* Aksen Cyan */
 }
-.tab.active{background:#00bcd4;color:#fff;}
-.tab-content{display:none;margin-top:10px;}
-.tab-content.active{display:block;}
-table{width:100%;border-collapse:collapse;margin-top:10px;}
-th,td{border:1px solid #00bcd4;padding:6px;text-align:center;}
-.action-btn{padding:4px 8px;border-radius:6px;border:none;cursor:pointer;}
-.kembali{background:#f44336;color:#fff;}
-.kembali:hover{background:#c62828;}
-.loading{
-  display:none;
-  text-align:center;
-  margin:10px 0;
-  font-weight:bold;
+
+input[type="text"] {
+  width: calc(100% - 20px);
+  padding: 10px;
+  margin: 5px 0 10px 0;
+  border-radius: 8px;
+  border: 1px solid #b2dfdb;
+  box-sizing: border-box;
+  transition: border-color 0.3s;
 }
-.popup-overlay{
-  display:none;
-  position:fixed;top:0;left:0;width:100%;height:100%;
-  background:rgba(0,0,0,0.6);
-  justify-content:center;align-items:center;
+input[type="text"]:focus {
+  border-color: #00bcd4; /* Aksen Cyan */
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(0, 188, 212, 0.2);
 }
-.popup{
-  background:#fff;
-  padding:20px;
-  border-radius:10px;
-  width:300px;
-  text-align:center;
+
+button {
+  padding: 10px 15px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  background: #00bcd4; /* Aksen Cyan */
+  color: #fff;
+  font-weight: 600;
+  transition: background 0.3s, transform 0.1s;
 }
-.popup button{
-  margin-top:10px;
-  width:80px;
+button:hover {
+  background: #0097a7; /* Dark Cyan Hover */
+  transform: translateY(-1px);
 }
+
+/* --- Profile and Loading --- */
+#profil {
+  margin: 20px 0;
+  padding: 15px;
+  background: #e0f7fa; /* Light Cyan Background */
+  border-left: 5px solid #00bcd4; /* Aksen Cyan */
+  border-radius: 8px;
+}
+
+.loading {
+  display: none;
+  text-align: center;
+  margin: 15px 0;
+  font-weight: bold;
+  color: #00bcd4; /* Aksen Cyan */
+}
+
+/* --- Tabs --- */
+.tabs {
+  display: flex;
+  margin-top: 20px;
+  border-bottom: 2px solid #b2dfdb;
+}
+
+.tab {
+  flex: 1;
+  text-align: center;
+  padding: 12px;
+  cursor: pointer;
+  background: #f5f5f5;
+  color: #455a64;
+  border-top-left-radius: 8px;
+  border-top-right-radius: 8px;
+  transition: background 0.3s, color 0.3s;
+}
+
+.tab:hover {
+  background: #e0e0e0;
+}
+
+.tab.active {
+  background: #00bcd4; /* Aksen Cyan Active */
+  color: #fff;
+  border-bottom: 2px solid #00bcd4; 
+}
+
+.tab-content {
+  display: none;
+  margin-top: 15px;
+  padding: 15px;
+  background: #fff;
+  border: 1px solid #b2dfdb;
+  border-radius: 0 0 8px 8px;
+}
+.tab-content.active {
+  display: block;
+}
+
+/* --- Table Styles --- */
+table {
+  width: 100%;
+  border-collapse: separate; 
+  border-spacing: 0;
+  margin-top: 15px;
+}
+th, td {
+  padding: 10px;
+  text-align: left;
+  border-bottom: 1px solid #e0f2f1;
+}
+th {
+  background: #e0f7fa; /* Light Cyan Table Header */
+  color: #0097a7; /* Dark Cyan Text */
+  font-weight: 600;
+  text-align: center;
+}
+td {
+  text-align: center;
+  vertical-align: middle;
+}
+tr:last-child td {
+  border-bottom: none;
+}
+
+.action-btn {
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-weight: 500;
+}
+.kembali {
+  background: #ef5350; /* Red - Tidak diubah, karena ini aksi bahaya */
+  color: #fff;
+}
+.kembali:hover {
+  background: #e53935;
+}
+
+/* --- Autocomplete Styles --- */
+.autocomplete-container {
+    position: relative;
+    width: 100%; 
+}
+
+.autocomplete-results {
+    position: absolute;
+    z-index: 100;
+    width: 100%;
+    max-height: 200px;
+    overflow-y: auto;
+    background: #fff;
+    border: 1px solid #b2dfdb;
+    border-top: none;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    border-radius: 0 0 8px 8px;
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+}
+
+.autocomplete-item {
+    padding: 10px;
+    cursor: pointer;
+    border-bottom: 1px solid #e0f2f1;
+    font-size: 14px;
+    color: #455a64;
+}
+
+.autocomplete-item:last-child {
+    border-bottom: none;
+}
+
+.autocomplete-item:hover, .autocomplete-item.selected {
+    background: #e0f7fa; /* Light Cyan Hover */
+    color: #0097a7; /* Dark Cyan Text */
+}
+
+/* --- Popup Styles --- */
+.popup-overlay {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(38, 50, 56, 0.7); 
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.popup {
+  background: #fff;
+  padding: 30px;
+  border-radius: 12px;
+  width: 350px;
+  text-align: center;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+}
+
+.popup button {
+  margin-top: 20px;
+  width: 100px;
+  background: #00bcd4; /* Aksen Cyan */
+}
+
 </style>
 </head>
 <body>
 <div class="container">
-  <h2>📚 Peminjaman Buku</h2>
+  
+  <div class="header-container">
+    <h2 class="main-title">
+      Sistem Peminjaman Buku
+    </h2>
+    <div class="title-underline"></div>
+  </div>
+  <div class="autocomplete-container">
+    <label for="nisInput">NIS Anggota</label>
+    <input type="text" id="nisInput" placeholder="Ketik NIS, Nama, atau Blok...">
+    <div id="nisAutocomplete" class="autocomplete-results" style="display:none;"></div>
+  </div>
+  <button id="cekBtn" style="width:100%;">Cek & Muat Profil</button>
 
-  <!-- Input NIS -->
-  <label>NIS Anggota</label><br>
-  <input type="text" id="nisInput" placeholder="Masukkan NIS"><br>
-  <button id="cekBtn">Cek</button>
-
-  <!-- Loading -->
   <div id="loading" class="loading">Sedang memuat...</div>
 
-  <!-- Profil -->
   <div id="profil" style="display:none;"></div>
 
-  <!-- Tabs -->
   <div id="tabs" style="display:none;">
     <div class="tabs">
-      <div class="tab active" onclick="bukaTab('dipinjam')">Buku Dipinjam</div>
-      <div class="tab" onclick="bukaTab('pinjam')">Pinjam Buku</div>
+      <div class="tab active" onclick="bukaTab('dipinjam', this)">Buku Dipinjam</div>
+      <div class="tab" onclick="bukaTab('pinjam', this)">Pinjam Buku</div>
     </div>
 
-    <!-- Buku Dipinjam -->
     <div id="dipinjam" class="tab-content active">
       <table>
         <thead>
@@ -108,25 +295,27 @@ th,td{border:1px solid #00bcd4;padding:6px;text-align:center;}
             <th>Judul</th>
             <th>Tgl Pinjam</th>
             <th>Tgl Kembali</th>
-            <th>Keterlambatan</th>
-            <th>Denda</th>
+            <th>Keterlambatan (Hari)</th>
+            <th>Denda (Rp)</th>
             <th>Aksi</th>
           </tr>
         </thead>
         <tbody id="listDipinjam"></tbody>
       </table>
+      <p id="noBuku" style="text-align:center; margin-top:15px; font-style:italic; display:none;">Tidak ada buku yang sedang dipinjam.</p>
     </div>
 
-    <!-- Pinjam Buku -->
     <div id="pinjam" class="tab-content">
-      <label>Kode Inventaris</label><br>
-      <input type="text" id="kodeInput" placeholder="Masukkan kode inventaris"><br>
-      <button id="pinjamBtn">Konfirmasi</button>
+      <div class="autocomplete-container">
+        <label for="kodeInput">Kode Inventaris / Judul Buku</label>
+        <input type="text" id="kodeInput" placeholder="Ketik Kode atau Judul Buku">
+        <div id="kodeAutocomplete" class="autocomplete-results" style="display:none;"></div>
+      </div>
+      <button id="pinjamBtn" style="width:100%;">Konfirmasi Pinjam</button>
     </div>
   </div>
 </div>
 
-<!-- Popup Manual -->
 <div class="popup-overlay" id="popup">
   <div class="popup">
     <div id="popupMessage"></div>
@@ -135,7 +324,7 @@ th,td{border:1px solid #00bcd4;padding:6px;text-align:center;}
 </div>
 
 <script>
-// Firebase Config
+// --- KONFIGURASI FIREBASE ---
 const firebaseConfig = {
   apiKey: "AIzaSyByw2om-sKHqgCWBDJcE7FEtONoUoJbn9M",
   authDomain: "traying-29bf4.firebaseapp.com",
@@ -148,162 +337,358 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
-let anggotaAktif=null;
+// --- STATE GLOBAL ---
+let anggotaAktif = null;
+let dataKeanggotaan = {}; 
+let dataBuku = {}; 
 
-// Popup helper
-function showPopup(msg, callback=null){
-  const popup=document.getElementById('popup');
-  const btn=document.getElementById('popupOk');
-  document.getElementById('popupMessage').innerText=msg;
-  popup.style.display='flex';
+// --- HELPER FUNCTIONS ---
+
+// 1. Popup Helper
+function showPopup(msg, callback = null) {
+  const popup = document.getElementById('popup');
+  const btn = document.getElementById('popupOk');
+  document.getElementById('popupMessage').innerText = msg;
+  popup.style.display = 'flex';
   btn.focus();
-  btn.onclick=null;
-  btn.onclick=()=>{
-    popup.style.display='none';
-    if(callback) callback();
+  btn.onclick = null;
+  btn.onclick = () => {
+    popup.style.display = 'none';
+    if (callback) callback();
   };
-  btn.onkeydown=(e)=>{if(e.key==='Enter') btn.click();}
+  btn.onkeydown = (e) => { if (e.key === 'Enter') btn.click(); };
 }
 
-// Loading helper
-function showLoading(show){
-  document.getElementById('loading').style.display=show?'block':'none';
+// 2. Loading Helper
+function showLoading(show) {
+  document.getElementById('loading').style.display = show ? 'block' : 'none';
 }
 
-// Auto fokus Enter
-document.getElementById('nisInput').focus();
-document.getElementById('nisInput').addEventListener('keydown',e=>{
-  if(e.key==='Enter') document.getElementById('cekBtn').click();
-});
-document.getElementById('kodeInput').addEventListener('keydown',e=>{
-  if(e.key==='Enter') document.getElementById('pinjamBtn').click();
-});
+// 3. Pindah Tab
+function bukaTab(id, element) {
+  document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+  document.querySelectorAll(".tab-content").forEach(c => c.classList.remove("active"));
+  element.classList.add("active");
+  document.getElementById(id).classList.add("active");
+  if (id === 'pinjam') {
+    document.getElementById('kodeInput').focus();
+  }
+}
 
-// Cek Anggota
-document.getElementById('cekBtn').addEventListener('click',()=>{
-  const nis=document.getElementById('nisInput').value.trim();
-  if(!nis){showPopup("Masukkan NIS!"); return;}
+// 4. Muat Data Awal (Untuk Autocomplete)
+function muatDataAwal() {
   showLoading(true);
-  db.ref("keanggotaan/"+nis).once("value").then(snap=>{
+  const promises = [
+    db.ref("keanggotaan").once("value").then(snap => {
+      dataKeanggotaan = {};
+      snap.forEach(child => {
+        dataKeanggotaan[child.key] = child.val();
+      });
+    }),
+    db.ref("buku").once("value").then(snap => {
+      dataBuku = {};
+      snap.forEach(child => {
+        dataBuku[child.key] = child.val();
+      });
+    })
+  ];
+
+  Promise.all(promises).then(() => {
     showLoading(false);
-    if(snap.exists()){
-      anggotaAktif={nis:nis,...snap.val()};
-      document.getElementById("profil").style.display="block";
-      document.getElementById("profil").innerHTML=
-        `<b>Profil Anggota</b><br>
-        NIS: ${nis}<br>
+    setupAutocomplete('nisInput', dataKeanggotaan, ['nis', 'keanggotaan', 'blok']);
+    setupAutocomplete('kodeInput', dataBuku, ['kode', 'judul']);
+  }).catch(error => {
+    showLoading(false);
+    showPopup("Gagal memuat data awal: " + error.message);
+  });
+}
+
+// --- AUTOCPMLETE LOGIC ---
+function setupAutocomplete(inputId, sourceData, searchKeys) {
+  const inputEl = document.getElementById(inputId);
+  const resultsEl = document.getElementById(inputId.replace('Input', 'Autocomplete'));
+  let selectedIndex = -1;
+
+  const renderResults = (matches) => {
+    resultsEl.innerHTML = '';
+    resultsEl.style.display = matches.length > 0 ? 'block' : 'none';
+    selectedIndex = -1;
+
+    matches.slice(0, 8).forEach((item, index) => {
+      const li = document.createElement('li');
+      li.classList.add('autocomplete-item');
+
+      const primaryKey = inputId === 'nisInput' ? item.nis : item.kode;
+      const secondaryKey = inputId === 'nisInput' ? item.keanggotaan : item.judul;
+
+      li.innerHTML = `<b>${primaryKey}</b> - ${secondaryKey} (${item.blok || 'Inventaris'})`;
+
+      li.addEventListener('click', () => {
+        inputEl.value = primaryKey;
+        resultsEl.style.display = 'none';
+        if (inputId === 'nisInput') {
+          document.getElementById('cekBtn').click();
+        }
+      });
+      resultsEl.appendChild(li);
+    });
+  };
+
+  inputEl.addEventListener('input', () => {
+    const query = inputEl.value.toLowerCase().trim();
+    if (query.length < 2) {
+      resultsEl.style.display = 'none';
+      return;
+    }
+
+    const matches = Object.keys(sourceData).map(key => {
+      const item = { ...sourceData[key] };
+      if (inputId === 'nisInput') item.nis = key;
+      if (inputId === 'kodeInput') item.kode = key;
+      return item;
+    }).filter(item => {
+      return searchKeys.some(key => {
+        const value = String(item[key] || '').toLowerCase();
+        return value.includes(query);
+      });
+    });
+
+    renderResults(matches);
+  });
+
+  inputEl.addEventListener('blur', () => {
+    setTimeout(() => {
+      resultsEl.style.display = 'none';
+    }, 200);
+  });
+
+  inputEl.addEventListener('keydown', (e) => {
+    const items = resultsEl.querySelectorAll('.autocomplete-item');
+    if (items.length === 0) return;
+
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      selectedIndex = (selectedIndex + 1) % items.length;
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      selectedIndex = (selectedIndex - 1 + items.length) % items.length;
+    } else if (e.key === 'Enter') {
+      if (selectedIndex !== -1) {
+        e.preventDefault();
+        items[selectedIndex].click();
+      } else {
+        if (resultsEl.style.display === 'none') {
+          if (inputId === 'nisInput') document.getElementById('cekBtn').click();
+          if (inputId === 'kodeInput') document.getElementById('pinjamBtn').click();
+        }
+      }
+      return;
+    }
+
+    items.forEach((item, index) => {
+      item.classList.remove('selected');
+      if (index === selectedIndex) {
+        item.classList.add('selected');
+        item.scrollIntoView({ block: 'nearest' });
+      }
+    });
+
+    if (selectedIndex !== -1) {
+      const text = items[selectedIndex].innerText.split(' - ')[0];
+      inputEl.value = text;
+    }
+  });
+}
+
+
+// --- MAIN LOGIC ---
+
+// 1. Cek Anggota
+document.getElementById('cekBtn').addEventListener('click', () => {
+  const nis = document.getElementById('nisInput').value.trim();
+  if (!nis) { showPopup("Masukkan NIS!"); return; }
+
+  showLoading(true);
+  db.ref("keanggotaan/" + nis).once("value").then(snap => {
+    showLoading(false);
+    if (snap.exists()) {
+      anggotaAktif = { nis: nis, ...snap.val() };
+      document.getElementById("profil").style.display = "block";
+      document.getElementById("profil").innerHTML =
+        `<b>Profil Anggota Aktif</b><br>
+        NIS: <b>${nis}</b><br>
         Nama: ${anggotaAktif.keanggotaan}<br>
         Blok: ${anggotaAktif.blok}`;
-      document.getElementById("tabs").style.display="block";
+      document.getElementById("tabs").style.display = "block";
       muatDipinjam();
-      document.getElementById('kodeInput').focus();
-    }else{
+    } else {
+      anggotaAktif = null;
+      document.getElementById("profil").style.display = "none";
+      document.getElementById("tabs").style.display = "none";
       showPopup("Anggota tidak ditemukan!");
     }
+  }).catch(error => {
+    showLoading(false);
+    showPopup("Error saat cek anggota: " + error.message);
   });
 });
 
-// Buka Tab
-function bukaTab(id){
-  document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));
-  document.querySelectorAll(".tab-content").forEach(c=>c.classList.remove("active"));
-  event.target.classList.add("active");
-  document.getElementById(id).classList.add("active");
-}
+// 2. Muat Buku Dipinjam 
+function muatDipinjam() {
+  if (!anggotaAktif) return;
 
-// Muat Buku Dipinjam
-function muatDipinjam(){
-  const tbody=document.getElementById("listDipinjam");
+  const tbody = document.getElementById("listDipinjam");
+  const noBukuEl = document.getElementById("noBuku");
+  
+  tbody.innerHTML = "";
+  noBukuEl.style.display = "none"; 
   showLoading(true);
-  db.ref("peminjaman").orderByChild("nis").equalTo(anggotaAktif.nis).on("value",snap=>{
+
+  db.ref("peminjaman").orderByChild("nis").equalTo(anggotaAktif.nis).on("value", snap => {
     showLoading(false);
-    tbody.innerHTML="";
-    const hariIni=new Date();
-    hariIni.setHours(0,0,0,0);
-    snap.forEach(child=>{
-      const d=child.val();
-      const tglKembali=new Date(d.tanggalKembali);
-      let keterlambatan=0,denda=0;
-      if(hariIni>tglKembali){
-        keterlambatan=Math.floor((hariIni-tglKembali)/(1000*60*60*24));
-        denda=keterlambatan*1000;
+    tbody.innerHTML = ""; 
+    
+    const hariIni = new Date();
+    hariIni.setHours(0, 0, 0, 0);
+    let bukuCount = 0;
+
+    snap.forEach(child => {
+      bukuCount++;
+      const d = child.val();
+      const tglKembali = new Date(d.tanggalKembali);
+      let keterlambatan = 0, denda = 0;
+
+      if (hariIni > tglKembali) {
+        const selisihHari = Math.ceil((hariIni - tglKembali) / (1000 * 60 * 60 * 24));
+        keterlambatan = selisihHari;
+        denda = keterlambatan * 1000; 
       }
-      const tr=document.createElement("tr");
-      tr.innerHTML=`
+
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
         <td>${d.kode}</td>
         <td>${d.judul}</td>
         <td>${d.tanggalPinjam}</td>
         <td>${d.tanggalKembali}</td>
         <td>${keterlambatan}</td>
-        <td>${denda}</td>
-        <td><button class="action-btn kembali" onclick="kembalikan('${child.key}')">Kembalikan</button></td>
+        <td>Rp ${denda.toLocaleString('id-ID')}</td>
+        <td><button class="action-btn kembali" onclick="kembalikan('${child.key}', ${denda})">Kembalikan</button></td>
       `;
       tbody.appendChild(tr);
     });
+
+    if (bukuCount === 0) {
+      noBukuEl.style.display = "block";
+    } else {
+      noBukuEl.style.display = "none";
+    }
   });
 }
 
-// Pinjam Buku
-document.getElementById('pinjamBtn').addEventListener('click',()=>{
-  const kode=document.getElementById('kodeInput').value.trim();
-  if(!kode){showPopup("Masukkan kode inventaris!"); return;}
+// 3. Pinjam Buku
+document.getElementById('pinjamBtn').addEventListener('click', () => {
+  if (!anggotaAktif) { showPopup("Silakan cek profil anggota terlebih dahulu!"); return; }
+  const kode = document.getElementById('kodeInput').value.trim();
+  if (!kode) { showPopup("Masukkan kode inventaris!"); return; }
+
   showLoading(true);
 
-  // cek apakah anggota sudah pinjam buku
-  db.ref("peminjaman").orderByChild("nis").equalTo(anggotaAktif.nis).once("value").then(snap=>{
-    if(snap.exists()){
+  db.ref("peminjaman").orderByChild("nis").equalTo(anggotaAktif.nis).once("value").then(snapPeminjaman => {
+    if (snapPeminjaman.exists()) {
       showLoading(false);
-      showPopup("Anggota hanya bisa pinjam 1 buku!");
+      showPopup("Anggota hanya bisa pinjam **1 buku** dalam satu waktu!");
       return;
     }
 
-    // cek data buku
-    db.ref("buku/"+kode).once("value").then(snapBuku=>{
-      showLoading(false);
-      if(!snapBuku.exists()){
-        showPopup("Buku tidak ditemukan!");
+    db.ref("buku/" + kode).once("value").then(snapBuku => {
+      if (!snapBuku.exists()) {
+        showLoading(false);
+        showPopup(`Buku dengan kode '${kode}' tidak ditemukan!`);
         return;
       }
-      const judul=snapBuku.val().judul;
+      const judul = snapBuku.val().judul;
 
-      const today=new Date();
-      const pinjam=today.toISOString().split("T")[0];
-      const kembaliDate=new Date();
-      kembaliDate.setDate(today.getDate()+4); // 5 hari total, minus 1 karena mulai hari pinjam
-      const kembali=kembaliDate.toISOString().split("T")[0];
+      db.ref("peminjaman").orderByChild("kode").equalTo(kode).once("value").then(snapCekPinjam => {
+        if (snapCekPinjam.exists()) {
+            showLoading(false);
+            showPopup(`Buku dengan kode '${kode}' sedang dipinjam oleh anggota lain!`);
+            return;
+        }
 
-      const data={
-        nis:anggotaAktif.nis,
-        nama:anggotaAktif.keanggotaan,
-        blok:anggotaAktif.blok,
-        kode:kode,
-        judul:judul,
-        tanggalPinjam:pinjam,
-        tanggalKembali:kembali
-      };
+        const today = new Date();
+        const pinjam = today.toISOString().split("T")[0]; 
+        const kembaliDate = new Date();
+        kembaliDate.setDate(today.getDate() + 4); 
+        const kembali = kembaliDate.toISOString().split("T")[0]; 
 
-      db.ref("peminjaman").push(data).then(()=>{
-        document.getElementById('kodeInput').value='';
-        bukaTabLangsung('dipinjam');
+        const data = {
+          nis: anggotaAktif.nis,
+          nama: anggotaAktif.keanggotaan,
+          blok: anggotaAktif.blok,
+          kode: kode,
+          judul: judul,
+          tanggalPinjam: pinjam,
+          tanggalKembali: kembali
+        };
+
+        db.ref("peminjaman").push(data).then(() => {
+          showLoading(false);
+          document.getElementById('kodeInput').value = '';
+          showPopup("Peminjaman buku berhasil!", () => {
+             bukaTabLangsung('dipinjam'); 
+          });
+        }).catch(error => {
+          showLoading(false);
+          showPopup("Gagal menyimpan data peminjaman: " + error.message);
+        });
+
       });
+    }).catch(error => {
+        showLoading(false);
+        showPopup("Error saat cek buku: " + error.message);
     });
+  }).catch(error => {
+    showLoading(false);
+    showPopup("Error saat cek peminjaman: " + error.message);
   });
 });
 
-// Pindah Tab langsung via id
-function bukaTabLangsung(id){
-  document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));
-  document.querySelectorAll(".tab-content").forEach(c=>c.classList.remove("active"));
-  document.querySelector(`.tab[onclick*="${id}"]`).classList.add("active");
-  document.getElementById(id).classList.add("active");
+
+// 4. Pindah Tab langsung via id (Helper)
+function bukaTabLangsung(id) {
+  document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+  document.querySelectorAll(".tab-content").forEach(c => c.classList.remove("active"));
+  const tabElement = document.querySelector(`.tab[onclick*="${id}"]`);
+  if (tabElement) {
+    tabElement.classList.add("active");
+    document.getElementById(id).classList.add("active");
+  }
 }
 
-// Kembalikan Buku
-function kembalikan(key){
-  showPopup("Apakah buku ini ingin dikembalikan?",()=>{
-    db.ref("peminjaman/"+key).remove();
+// 5. Kembalikan Buku
+function kembalikan(key, denda) {
+  let msg = "Apakah buku ini ingin dikembalikan?";
+  if (denda > 0) {
+    msg = `Anggota ini memiliki denda sebesar **Rp ${denda.toLocaleString('id-ID')}**. Pastikan denda telah dibayar sebelum mengembalikan buku! Apakah Anda yakin ingin mengembalikan buku?`;
+  }
+
+  showPopup(msg, () => {
+    showLoading(true);
+    db.ref("peminjaman/" + key).remove().then(() => {
+      showLoading(false);
+      showPopup("Buku berhasil dikembalikan.");
+    }).catch(error => {
+      showLoading(false);
+      showPopup("Gagal mengembalikan buku: " + error.message);
+    });
   });
 }
+
+// --- INITIALIZATION ---
+window.onload = () => {
+  muatDataAwal(); 
+  document.getElementById('nisInput').focus();
+};
 </script>
 </body>
 </html>
