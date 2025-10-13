@@ -3,176 +3,212 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistem Perpustakaan - Instan Load</title>
+    <title>Sistem Perpustakaan Modern (Iframe Fullscreen) - Aksen Cyan</title>
     <link rel="icon" type="image/png" href="logo.png">
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" crossorigin="anonymous">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght300;400;500;700&display=swap" rel="stylesheet">
     <style>
         /* Variabel CSS */
         :root {
-            --primary-color: #007bff; 
+            /* KUNCI PERUBAHAN: Warna Cyan */
+            --primary-color: #00bcd4; /* Cyan terang */
+            --primary-dark: #0097a7;  /* Cyan lebih gelap */
+            
             --secondary-color: #6c757d; 
+            --background-light: #f4f7f9; 
             --content-background: #ffffff; 
-            --header-height: 60px;
-            --sidebar-width: 280px;
+            --header-height: 70px; 
             --text-dark: #343a40; 
+            --shadow-subtle: 0 4px 12px rgba(0, 0, 0, 0.1); 
         }
 
-        /* KUNCI 1: Memastikan Full Height Viewport */
+        /* 1. KUNCI: Mencegah scroll pada level HTML/Body */
         html, body {
             height: 100%;
             margin: 0;
-            overflow: hidden; 
+            overflow: hidden; /* Mencegah scrolling halaman */
         }
 
         body {
             font-family: 'Roboto', sans-serif;
-            background: #f4f7f9;
+            background: var(--background-light);
             color: var(--text-dark);
+            /* Tata letak vertikal: Header dan Konten Utama */
             display: flex;
             flex-direction: column;
         }
 
-        /* --- Header --- */
+        /* --- Header (Branding dan Navigasi) --- */
         header {
             height: var(--header-height);
             background: var(--content-background);
-            color: var(--primary-color);
+            color: var(--primary-color); /* Warna teks branding */
             padding: 0 30px;
-            font-size: 1.6em;
+            box-shadow: var(--shadow-subtle);
+            display: flex;
+            align-items: center; 
+            justify-content: space-between; 
+            flex-shrink: 0; 
+        }
+        
+        .branding {
+            font-size: 1.5em;
             font-weight: 700;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
             display: flex;
             align-items: center;
-            flex-shrink: 0;
+        }
+        .branding i {
+            margin-right: 15px;
+            font-size: 1.2em;
+            color: var(--primary-dark); /* Warna ikon branding */
         }
 
-        /* --- Kontainer Utama (Konten + Sidebar) --- */
-        #main-container {
-            flex-grow: 1; 
-            display: grid;
-            grid-template-columns: 1fr var(--sidebar-width);
-            overflow: hidden;
+        /* Navigasi Ikon Header */
+        #header-nav {
+            display: flex;
+            gap: 20px;
         }
 
-        /* --- Area Konten Utama --- */
-        #content-area {
-            padding: 0; 
-            overflow: hidden; /* Penting! Scroll di handle oleh IFRAME di dalamnya jika diperlukan */
-            position: relative; /* Kunci untuk positioning iframe */
-        }
-        
-        /* KUNCI 2: Styling untuk IFRAME */
-        .page-iframe {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%; /* Mengisi penuh area konten */
+        .nav-icon {
+            background: none; 
             border: none;
-            background: var(--content-background);
-            opacity: 0; /* Awalnya tersembunyi */
-            visibility: hidden; /* Awalnya tersembunyi */
-            transition: opacity 0.3s; /* Transisi halus saat muncul/hilang */
+            color: var(--secondary-color);
+            padding: 10px;
+            cursor: pointer;
+            font-size: 1.4em; 
+            border-radius: 50%;
+            transition: all 0.3s ease;
+            position: relative;
+            outline: none;
+        }
+
+        .nav-icon:hover {
+            color: var(--primary-color); /* Warna hover */
+            background-color: #f0f0f0;
+        }
+
+        .nav-icon.active {
+            color: var(--content-background); 
+            background: var(--primary-color); /* Warna aktif Cyan */
+            /* Sesuaikan shadow dengan warna Cyan */
+            box-shadow: 0 3px 8px rgba(0, 188, 212, 0.4); 
+            transform: translateY(-2px); 
         }
         
-        .page-iframe.active {
-            opacity: 1; /* Tampilkan halaman aktif */
+        /* Tooltip (Keterangan) */
+        .nav-icon::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            bottom: -35px; 
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: var(--text-dark);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 0.8em;
+            white-space: nowrap;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s;
+            z-index: 10;
+        }
+
+        .nav-icon:hover::after {
+            opacity: 1;
             visibility: visible;
         }
-
-        /* --- Sidebar Kanan (Tidak diubah dari versi sebelumnya) --- */
-        #sidebar {
-            background: var(--content-background);
-            padding: 20px;
-            height: 100%; 
-            border-left: 1px solid #dee2e6;
-            box-shadow: -2px 0 5px rgba(0, 0, 0, 0.05);
+        
+        /* --- Kontainer Utama (Hanya Iframe) --- */
+        #main-container {
+            flex-grow: 1; 
+            overflow: hidden; 
+            padding: 0; 
             display: flex;
-            flex-direction: column;
-            gap: 10px;
-            flex-shrink: 0;
-            overflow-y: auto;
+        }
+
+        /* Gaya Iframe */
+        #main-iframe {
+            width: 100%;
+            height: 100%;
+            border: none; 
+            border-radius: 0; 
+            box-shadow: none;
+            background: var(--content-background); 
         }
         
-        #sidebar h3 {
-            color: var(--secondary-color);
-            text-align: left;
-            margin-top: 10px;
-            margin-bottom: 25px;
-            font-weight: 500;
-            font-size: 1.1em;
-            padding-left: 10px;
-        }
-
-        /* Gaya Tombol Navigasi Sidebar (Tidak diubah) */
-        .nav-button {
-            width: 100%;
-            background: none; 
-            color: var(--text-dark);
-            border: none;
-            padding: 12px 15px;
-            cursor: pointer;
-            font-weight: 400;
-            font-size: 1em;
-            border-radius: 6px;
-            transition: all 0.2s ease;
-            text-align: left;
-        }
-        .nav-button:hover { background: #e9ecef; color: var(--primary-color); }
-        .nav-button.active { background: var(--primary-color); color: #ffffff; font-weight: 600; box-shadow: 0 3px 6px rgba(0, 123, 255, 0.3); }
-
     </style>
 </head>
 <body>
 
 <header>
-    SISTEM PERPUSTAKAAN
+    <div class="branding">
+        <i class="fas fa-book-open"></i>
+        SISTEM PERPUSTAKAAN
+    </div>
+    
+    <nav id="header-nav">
+        
+        <button data-page="daftarpeminjam.html" data-tooltip="Daftar Peminjam" class="nav-icon active">
+            <i class="fas fa-home"></i>
+        </button>
+        
+        <button data-page="pinjam.html" data-tooltip="Pinjam Buku" class="nav-icon">
+            <i class="fas fa-clipboard-list"></i>
+        </button>
+        
+        <button data-page="daftarketerlambatan.html" data-tooltip="Daftar Keterlambatan" class="nav-icon">
+            <i class="fas fa-hourglass-half"></i>
+        </button>
+        
+        <button data-page="buku.html" data-tooltip="Manajemen Buku" class="nav-icon">
+            <i class="fas fa-book"></i>
+        </button>
+
+        <button data-page="keanggotaan.html" data-tooltip="Manajemen Keanggotaan" class="nav-icon">
+            <i class="fas fa-users"></i>
+        </button>
+    </nav>
 </header>
 
 <div id="main-container">
-    <div id="content-area">
-        
-        <iframe id="frame-beranda" src="beranda.html" class="page-iframe active" data-id="beranda"></iframe>
-        <iframe id="frame-pinjam" src="pinjam.html" class="page-iframe" data-id="pinjam"></iframe>
-        <iframe id="frame-kembali" src="kembali.html" class="page-iframe" data-id="kembali"></iframe>
-        <iframe id="frame-manajemen" src="manajemen.html" class="page-iframe" data-id="manajemen"></iframe>
-        
-    </div>
-
-    <div id="sidebar">
-        <h3>MENU APLIKASI</h3>
-        <button data-id="beranda" class="nav-button active" onclick="showPage(this)">Beranda</button>
-        <button data-id="pinjam" class="nav-button" onclick="showPage(this)">Pinjam Buku</button>
-        <button data-id="kembali" class="nav-button" onclick="showPage(this)">Pengembalian</button>
-        <button data-id="manajemen" class="nav-button" onclick="showPage(this)">Manajemen Data</button>
-    </div>
+    <iframe id="main-iframe" src="" frameborder="0"></iframe>
 </div>
 
 <script>
-function showPage(el) {
-    const pageId = el.getAttribute('data-id');
-    
-    // 1. Kelola Tombol Aktif (Sidebar)
-    document.querySelectorAll('.nav-button').forEach(button => {
-        button.classList.remove('active');
-    });
-    el.classList.add('active');
-    
-    // 2. Kelola Konten Aktif (Iframe)
-    document.querySelectorAll('.page-iframe').forEach(iframe => {
-        // Sembunyikan semua iframe
-        iframe.classList.remove('active');
-    });
-    
-    // Tampilkan iframe yang sesuai
-    const targetFrame = document.querySelector(`.page-iframe[data-id="${pageId}"]`);
-    if (targetFrame) {
-        targetFrame.classList.add('active');
-    }
-}
+    const mainIframe = document.getElementById('main-iframe');
+    const navButtons = document.querySelectorAll('.nav-icon');
 
-// Tidak ada lagi DOMContentLoaded load karena semua sudah dimuat melalui atribut src
-// pada tag <iframe>.
+    // Fungsi untuk Memuat Halaman menggunakan Iframe
+    function loadPage(page, targetButton) {
+        mainIframe.src = page;
+        updateActiveButton(targetButton);
+    }
+
+    // Fungsi untuk Menandai Tombol Aktif
+    function updateActiveButton(targetButton) {
+        navButtons.forEach(button => {
+            button.classList.remove('active');
+        });
+        targetButton.classList.add('active');
+    }
+
+    // Menambahkan Event Listener ke Tombol Navigasi
+    navButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const page = this.getAttribute('data-page');
+            loadPage(page, this);
+        });
+    });
+
+    // Muat Halaman Awal saat Dokumen Siap
+    document.addEventListener('DOMContentLoaded', () => {
+        const initialButton = document.querySelector('.nav-icon.active');
+        if (initialButton) {
+            const initialPage = initialButton.getAttribute('data-page');
+            loadPage(initialPage, initialButton);
+        }
+    });
 </script>
 
 </body>
