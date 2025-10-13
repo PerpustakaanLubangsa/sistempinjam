@@ -12,27 +12,69 @@ body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     background: #f4f7f6;
     color: #333;
-    /* Padding diubah: top 10px, sisanya 20px */
-    padding: 10px 20px 20px 20px; 
+    padding: 20px; 
 }
-h2 {
-    text-align: center;
-    color: #1f3a6a;
+
+/* Container untuk Judul dan Tombol */
+.header-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
     margin-bottom: 20px;
-    font-weight: 600;
-    height: 1.5em;
-    /* Mengurangi margin-top agar lebih dekat ke atas jika ada judul */
-    margin-top: 0; 
 }
+
+h2 {
+    color: #1f3a6a;
+    font-weight: 600;
+    margin: 0;
+}
+
+/* Tombol Salin */
+#copyTableBtn {
+    background-color: #00bcd4; /* Cyan - Warna yang sama dengan header tabel */
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    transition: background-color 0.3s, transform 0.1s, box-shadow 0.3s;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+#copyTableBtn:hover {
+    background-color: #0097a7; /* Cyan yang lebih gelap saat hover */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+#copyTableBtn:active {
+    transform: scale(0.98); /* Efek klik */
+}
+
+/* Pemberitahuan Salin */
+#copyMessage {
+    margin-left: 15px;
+    color: #28a745; /* Hijau */
+    font-size: 14px;
+    opacity: 0;
+    transition: opacity 0.5s ease-out;
+    font-weight: 500;
+}
+
+/* Container untuk Tabel */
+.table-container {
+    overflow-x: auto; /* Memungkinkan scrolling horizontal pada layar kecil */
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+    border-radius: 3px;
+    background-color: #fff;
+    margin-top: 20px;
+}
+
 table {
     width: 100%;
     border-collapse: collapse;
-    /* Margin atas dihilangkan sepenuhnya (0px) untuk menempel ke atas */
-    margin-top: 0; 
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
-    border-radius: 10px;
-    overflow: hidden;
-    background-color: #fff;
+    margin: 0; 
 }
 th, td {
     border: none;
@@ -40,11 +82,14 @@ th, td {
 }
 th {
     /* --- CYAN COLOR FOR HEADER (TH) --- */
-    background: #00bcd4; /* Bright Cyan */
+    background: #00bcd4; 
     color: #fff;
     font-weight: 600;
     border-bottom: 2px solid #0097a7;
     text-align: center;
+    position: sticky; /* Agar header tetap terlihat saat scroll vertikal */
+    top: 0;
+    z-index: 10;
 }
 td {
     border-bottom: 1px solid #eee;
@@ -66,27 +111,57 @@ td:nth-child(5), th:nth-child(5) {
 td:nth-child(6), th:nth-child(6), td:nth-child(7), th:nth-child(7) {
     text-align: right; /* Keterlambatan, Denda (Numbers) */
 }
+
+/* Media Query untuk Tampilan Responsif */
+@media screen and (max-width: 768px) {
+    body {
+        padding: 15px;
+    }
+    .header-container {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    h2 {
+        margin-bottom: 15px;
+    }
+    #copyTableBtn {
+        width: 100%;
+        margin-bottom: 10px;
+    }
+}
 </style>
 </head>
 <body>
 
-<h2></h2>
-<table>
-  <thead>
-    <tr>
-      <th>Nama</th>
-      <th>Blok</th>
-      <th>Judul Buku</th>
-      <th>Kode Inventaris</th>
-      <th>Harus Kembali</th>
-      <th>Keterlambatan (hari)</th>
-      <th>Denda</th>
-    </tr>
-  </thead>
-  <tbody id="lateBody"></tbody>
-</table>
+<div class="header-container">
+    <h2>Daftar Keterlambatan Pengembalian Buku</h2>
+    <div>
+        <button id="copyTableBtn" onclick="copyTableData()">
+            Salin Data Tabel
+        </button>
+        <span id="copyMessage">Disalin!</span>
+    </div>
+</div>
+
+<div class="table-container">
+    <table>
+      <thead>
+        <tr>
+          <th>Nama</th>
+          <th>Blok</th>
+          <th>Judul Buku</th>
+          <th>Kode Inventaris</th>
+          <th>Harus Kembali</th>
+          <th>Keterlambatan (hari)</th>
+          <th>Denda</th>
+        </tr>
+      </thead>
+      <tbody id="lateBody"></tbody>
+    </table>
+</div>
 
 <script>
+// Konfigurasi Firebase Anda
 const firebaseConfig = {
   apiKey: "AIzaSyByw2om-sKHqgCWBDJcE7FEtONoUoJbn9M",
   authDomain: "traying-29bf4.firebaseapp.com",
@@ -99,24 +174,45 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
-function formatRupiah(num){ return "Rp " + num.toLocaleString("id-ID"); }
+/**
+ * Memformat angka menjadi format Rupiah.
+ * @param {number} num - Angka yang akan diformat.
+ * @returns {string} String dalam format Rupiah.
+ */
+function formatRupiah(num){ 
+    return "Rp " + num.toLocaleString("id-ID"); 
+}
 
+/**
+ * Memuat dan memperbarui data keterlambatan dari Firebase ke dalam tabel.
+ */
 function updateKeterlambatan(){
   const tbody = document.getElementById('lateBody');
+  // Menambahkan loader atau pesan 'Memuat...' sementara data diambil
+  tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding: 20px; color: #999;">Memuat data...</td></tr>'; 
+  
   db.ref('peminjaman').on('value', snap => {
     tbody.innerHTML = '';
     const hariIni = new Date();
     hariIni.setHours(0,0,0,0);
+    let hasLateData = false;
 
     snap.forEach(child => {
       const data = child.val();
-      if(!data.tanggalKembali) return; // ambil dari field yang ada di Firebase
+      
+      // Filter data: hanya tampilkan yang sudah lewat tanggal kembali DAN belum dikembalikan
+      // Asumsi: jika ada 'tanggalKembali' (dari field Firebase) dan hari ini sudah melewatinya
+      // PENTING: Pastikan logika field 'tanggalKembali' di Firebase adalah TANGGAL HARUS KEMBALI
+      // Jika Anda memiliki field terpisah untuk 'tanggalPengembalianAktual', gunakan field tersebut untuk filter.
+      if(!data.tanggalKembali) return; 
+      
       const tglKembali = new Date(data.tanggalKembali);
       tglKembali.setHours(0,0,0,0);
 
       if(hariIni > tglKembali){
+        hasLateData = true;
         const diffDays = Math.floor((hariIni - tglKembali)/(1000*60*60*24));
-        const denda = diffDays * 1000;
+        const denda = diffDays * 1000; // Asumsi denda Rp 1.000 per hari
 
         const tr = document.createElement('tr');
         tr.innerHTML = `
@@ -131,9 +227,57 @@ function updateKeterlambatan(){
         tbody.appendChild(tr);
       }
     });
+
+    if (!hasLateData) {
+        // Tampilkan pesan jika tidak ada data keterlambatan
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding: 20px; color: #555; font-style: italic;">Tidak ada data keterlambatan saat ini.</td></tr>';
+    }
   });
 }
 
+/**
+ * Menyalin data dari seluruh tabel (termasuk header) ke clipboard.
+ */
+function copyTableData() {
+    const table = document.querySelector('table');
+    if (!table) return;
+
+    let textToCopy = "";
+    
+    // Ambil teks dari Header (th)
+    const headerRow = table.tHead.rows[0];
+    let headerText = [];
+    for (let i = 0; i < headerRow.cells.length; i++) {
+        headerText.push(headerRow.cells[i].innerText);
+    }
+    textToCopy += headerText.join('\t') + '\n'; // Pisahkan kolom dengan Tab
+
+    // Ambil teks dari Body (td)
+    const bodyRows = table.tBodies[0].rows;
+    for (let i = 0; i < bodyRows.length; i++) {
+        let rowText = [];
+        for (let j = 0; j < bodyRows[i].cells.length; j++) {
+            rowText.push(bodyRows[i].cells[j].innerText);
+        }
+        textToCopy += rowText.join('\t') + '\n'; // Pisahkan kolom dengan Tab dan baris dengan baris baru
+    }
+
+    // Salin ke clipboard
+    navigator.clipboard.writeText(textToCopy).then(() => {
+        // Tampilkan pesan 'Disalin!'
+        const msg = document.getElementById('copyMessage');
+        msg.style.opacity = 1;
+        setTimeout(() => {
+            msg.style.opacity = 0;
+        }, 2000);
+    }).catch(err => {
+        console.error('Gagal menyalin:', err);
+        alert('Gagal menyalin data tabel. Periksa konsol untuk detail.');
+    });
+}
+
+
+// Inisialisasi
 updateKeterlambatan();
 </script>
 
