@@ -2,7 +2,7 @@
 <html lang="id">
 <head>
 <meta charset="UTF-8">
-<title>Manajemen Buku</title>
+<title>Manajemen Buku V2 Sederhana</title>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
@@ -25,9 +25,27 @@ h2 {text-align:center;}
 }
 input, button {
   padding: 8px;
-  margin: 5px;
+  margin: 5px 3px;
   border-radius: 6px;
   border: 1px solid #00bcd4;
+  box-sizing: border-box;
+}
+input[type="text"] {
+    flex-grow: 1;
+    min-width: 100px;
+}
+#formTambah {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    align-items: center;
+}
+#formTambah input {
+    margin: 0;
+}
+#formTambah button {
+    flex-shrink: 0;
+    margin-left: auto;
 }
 button {
   cursor: pointer;
@@ -41,14 +59,17 @@ table {
   width: 100%;
   border-collapse: collapse;
   margin-top: 15px;
+  font-size: 0.9em;
 }
 table, th, td {
   border: 1px solid #00bcd4;
 }
 th, td {
-  padding: 8px;
+  padding: 8px 5px;
   text-align: center;
 }
+td:nth-child(2) {text-align: left;}
+
 .action-btn {
   margin: 2px;
   padding: 5px 10px;
@@ -60,6 +81,7 @@ th, td {
 .edit:hover {background: #e0a800;}
 .delete {background: #f44336; color:#fff;}
 .delete:hover {background: #c62828;}
+
 /* Popup manual */
 .popup-overlay {
   display:none;
@@ -76,20 +98,26 @@ th, td {
   width:300px;
   text-align:center;
 }
-.popup input {width:90%;}
+.popup input {
+    width: 90%;
+    margin: 5px 0;
+}
 </style>
 </head>
 <body>
 <div class="container">
-  <h2>Manajemen Buku</h2>
+  <h2>Manajemen Buku (Penyimpanan: **buku\_v2**) 📚</h2>
   <form id="formTambah">
-    <input type="text" id="inventaris" placeholder="No. Inventaris" required>
+    <input type="text" id="inventaris" placeholder="No. Inventaris" required style="width: 120px;">
     <input type="text" id="judul" placeholder="Judul Buku" required>
+    <input type="text" id="pengarang" placeholder="Pengarang" required>
+    <input type="text" id="blok" placeholder="Blok" required style="width: 80px;">
+    <input type="text" id="rak" placeholder="Rak" required style="width: 80px;">
     <button type="submit">Tambah</button>
   </form>
 
   <div>
-    <p><b>Upload Excel (.xlsx)</b> dengan kolom: Inventaris | Judul</p>
+    <p><b>Upload Excel (.xlsx)</b> dengan kolom: Inventaris | Judul | **Pengarang | Blok | Rak**</p>
     <input type="file" id="uploadExcel" accept=".xlsx,.xls">
   </div>
 
@@ -98,29 +126,32 @@ th, td {
       <tr>
         <th>No. Inventaris</th>
         <th>Judul</th>
-        <th style="width:160px;">Aksi</th>
+        <th>Pengarang</th>
+        <th>Blok</th>
+        <th>Rak</th>
+        <th style="width:120px;">Aksi</th>
       </tr>
     </thead>
     <tbody id="dataBuku"></tbody>
   </table>
 
-  <!-- Tombol Hapus Semua -->
   <div style="margin-top:15px; text-align:right;">
     <button class="action-btn delete" onclick="bukaHapusSemua()">Hapus Semua Data</button>
   </div>
 </div>
 
-<!-- Popup Edit -->
 <div class="popup-overlay" id="popupEdit">
   <div class="popup">
     <h3>Edit Buku</h3>
-    <input type="text" id="editJudul"><br>
+    <input type="text" id="editJudul" placeholder="Judul Buku"><br>
+    <input type="text" id="editPengarang" placeholder="Pengarang"><br>
+    <input type="text" id="editBlok" placeholder="Blok"><br>
+    <input type="text" id="editRak" placeholder="Rak"><br>
     <button id="btnSimpanEdit">Simpan</button>
     <button onclick="tutupPopup('popupEdit')">Batal</button>
   </div>
 </div>
 
-<!-- Popup Hapus -->
 <div class="popup-overlay" id="popupHapus">
   <div class="popup">
     <h3>Konfirmasi Hapus</h3>
@@ -130,7 +161,6 @@ th, td {
   </div>
 </div>
 
-<!-- Popup Hapus Semua -->
 <div class="popup-overlay" id="popupHapusSemua">
   <div class="popup">
     <h3>Konfirmasi Hapus Semua</h3>
@@ -154,13 +184,26 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
+// **PATH PENYIMPANAN YANG DIGUNAKAN**
+const DATA_PATH_AKTIF = "buku_v2"; 
+
 // Tambah buku
 document.getElementById("formTambah").addEventListener("submit", e=>{
   e.preventDefault();
   const inv = document.getElementById("inventaris").value.trim();
   const judul = document.getElementById("judul").value.trim();
-  if(inv && judul){
-    db.ref("buku/"+inv).set({judul:judul});
+  const pengarang = document.getElementById("pengarang").value.trim();
+  const blok = document.getElementById("blok").value.trim();
+  const rak = document.getElementById("rak").value.trim();
+
+  // Memastikan semua field terisi
+  if(inv && judul && pengarang && blok && rak){ 
+    db.ref(DATA_PATH_AKTIF + "/"+inv).set({
+        judul: judul,
+        pengarang: pengarang,
+        blok: blok,
+        rak: rak
+    });
     e.target.reset();
   }
 });
@@ -176,8 +219,14 @@ document.getElementById("uploadExcel").addEventListener("change", e=>{
     const sheet = workbook.Sheets[workbook.SheetNames[0]];
     const rows = XLSX.utils.sheet_to_json(sheet);
     rows.forEach(r=>{
-      if(r.Inventaris && r.Judul){
-        db.ref("buku/"+r.Inventaris).set({judul:r.Judul});
+      // Memastikan semua kolom Excel ada (tanpa Penerbit)
+      if(r.Inventaris && r.Judul && r.Pengarang && r.Blok && r.Rak){
+        db.ref(DATA_PATH_AKTIF + "/"+r.Inventaris).set({
+            judul: r.Judul,
+            pengarang: r.Pengarang,
+            blok: r.Blok,
+            rak: r.Rak
+        });
       }
     });
   };
@@ -186,16 +235,27 @@ document.getElementById("uploadExcel").addEventListener("change", e=>{
 
 // Tampilkan data
 const tbody = document.getElementById("dataBuku");
-db.ref("buku").on("value", snap=>{
+db.ref(DATA_PATH_AKTIF).on("value", snap=>{
   tbody.innerHTML="";
   snap.forEach(child=>{
     const d=child.val();
     const tr=document.createElement("tr");
+
+    const dataString = encodeURIComponent(JSON.stringify({
+        judul: d.judul || '',
+        pengarang: d.pengarang || '',
+        blok: d.blok || '',
+        rak: d.rak || ''
+    }));
+
     tr.innerHTML=`
       <td>${child.key}</td>
-      <td>${d.judul}</td>
+      <td style="text-align: left;">${d.judul || ''}</td>
+      <td>${d.pengarang || ''}</td>
+      <td>${d.blok || ''}</td>
+      <td>${d.rak || ''}</td>
       <td>
-        <button class="action-btn edit" onclick="bukaEdit('${child.key}','${d.judul}')">Edit</button>
+        <button class="action-btn edit" onclick="bukaEdit('${child.key}','${dataString}')">Edit</button>
         <button class="action-btn delete" onclick="bukaHapus('${child.key}')">Hapus</button>
       </td>`;
     tbody.appendChild(tr);
@@ -204,9 +264,15 @@ db.ref("buku").on("value", snap=>{
 
 // Popup kontrol
 function tutupPopup(id){document.getElementById(id).style.display="none";}
-function bukaEdit(inv,judul){
+function bukaEdit(inv, dataString){
   editINV=inv;
-  document.getElementById("editJudul").value=judul;
+  const d = JSON.parse(decodeURIComponent(dataString));
+
+  document.getElementById("editJudul").value = d.judul;
+  document.getElementById("editPengarang").value = d.pengarang;
+  document.getElementById("editBlok").value = d.blok;
+  document.getElementById("editRak").value = d.rak;
+
   document.getElementById("popupEdit").style.display="flex";
   document.getElementById("editJudul").focus();
 }
@@ -223,10 +289,22 @@ function bukaHapusSemua(){
 // Edit simpan
 let editINV=null;
 document.getElementById("btnSimpanEdit").addEventListener("click",()=>{
-  const judul=document.getElementById("editJudul").value.trim();
-  if(editINV && judul){
-    db.ref("buku/"+editINV).update({judul:judul});
+  const judul = document.getElementById("editJudul").value.trim();
+  const pengarang = document.getElementById("editPengarang").value.trim();
+  const blok = document.getElementById("editBlok").value.trim();
+  const rak = document.getElementById("editRak").value.trim();
+
+  // Memastikan semua field terisi
+  if(editINV && judul && pengarang && blok && rak){
+    db.ref(DATA_PATH_AKTIF + "/"+editINV).update({
+        judul: judul,
+        pengarang: pengarang,
+        blok: blok,
+        rak: rak
+    });
     tutupPopup("popupEdit");
+  } else {
+      alert("Semua field wajib diisi!");
   }
 });
 
@@ -234,14 +312,14 @@ document.getElementById("btnSimpanEdit").addEventListener("click",()=>{
 let hapusINV=null;
 document.getElementById("btnHapusConfirm").addEventListener("click",()=>{
   if(hapusINV){
-    db.ref("buku/"+hapusINV).remove();
+    db.ref(DATA_PATH_AKTIF + "/"+hapusINV).remove();
     tutupPopup("popupHapus");
   }
 });
 
 // Hapus semua
 document.getElementById("btnHapusSemuaConfirm").addEventListener("click",()=>{
-  db.ref("buku").remove().then(()=>tutupPopup("popupHapusSemua"));
+  db.ref(DATA_PATH_AKTIF).remove().then(()=>tutupPopup("popupHapusSemua"));
 });
 
 // Akses Enter di popup
