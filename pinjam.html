@@ -479,6 +479,21 @@ td:first-child { font-weight: 700; color: var(--primary-color); }
 #popupOk:hover {
     background: var(--light-accent-color);
 }
+#popupCancel { /* Styling tambahan untuk tombol Batal */
+    background: #95a5a6; 
+    color: #fff; 
+    padding: 12px 30px; 
+    border: none; 
+    border-radius: 8px; 
+    cursor: pointer; 
+    margin-top: 20px; 
+    margin-right: 10px; 
+    font-weight: 600; 
+    transition: background 0.2s;
+}
+#popupCancel:hover {
+    background: #7f8c8d;
+}
 
 /* --- ANIMASI KEYFRAMES --- */
 @keyframes modalSlideIn {
@@ -520,20 +535,21 @@ td:first-child { font-weight: 700; color: var(--primary-color); }
     
     <div class="header-container">
         <h1 class="main-title">
-            <i class="fas fa-book-open"></i> Sistem Pinjam
+            <i class="fas fa-book-open"></i> Pustaka Cepat
         </h1>
+        <p class="subtitle">Sistem Peminjaman Buku Sekolah Cepat & Modern</p>
     </div>
     
     <div class="floating-search">
         <div class="search-input-wrapper" id="nisInputWrapper">
             <div class="autocomplete-container">
-                <input type="text" id="nisInput" placeholder="Cari NIS, Nama, atau Blok Anggota (Tekan Enter)...">
+                <input type="text" id="nisInput" placeholder="Cari NIS, Nama, atau Blok Anggota (Tekan Enter)..." autocomplete="off">
                 <div id="nisAutocomplete" class="autocomplete-results" style="display:none;"></div>
             </div>
         </div>
     </div>
 
-    <div id="loading" class="loading"><i class="fas fa-spinner"></i> Bismillah... masih memuat data...</div>
+    <div id="loading" class="loading"><i class="fas fa-spinner"></i> Sedang memuat data...</div>
     
 </div>
 
@@ -548,6 +564,7 @@ td:first-child { font-weight: 700; color: var(--primary-color); }
     <div class="popup">
         <i class="fas fa-info-circle"></i>
         <div id="popupMessage"></div>
+        <button id="popupCancel" style="display:none;">Batal</button>
         <button id="popupOk">Tutup</button>
     </div>
 </div>
@@ -587,23 +604,56 @@ let dataBuku = {};
 
 // --- HELPER FUNCTIONS ---
 
-function showPopup(msg, callback = null) {
+// MODIFIKASI: Mengubah showPopup agar bisa menerima tombol Batal/Konfirmasi (actionMode)
+function showPopup(msg, callbackOk = null, callbackCancel = null, actionBtnText = 'Tutup', actionMode = 'alert') {
     DOM.popupMsg.innerHTML = msg; 
     DOM.popup.style.display = 'flex';
     DOM.popup.querySelector('.popup').style.animation = 'popIn 0.3s forwards cubic-bezier(0.17, 0.84, 0.44, 1)';
-    DOM.popupBtn.innerText = 'Tutup';
-    DOM.popupBtn.focus();
-    DOM.popupBtn.onclick = null;
-    DOM.popupBtn.onclick = () => {
+    
+    const popupBtn = DOM.popupBtn;
+    const popupCancelBtn = document.getElementById('popupCancel');
+
+    // Mengatur tombol Batal dan Konfirmasi
+    if (actionMode === 'confirm') {
+        popupBtn.style.display = 'inline-block';
+        popupCancelBtn.style.display = 'inline-block';
+        popupBtn.innerText = actionBtnText; // Biasanya 'Ya, Konfirmasi'
+        popupCancelBtn.innerText = 'Batal';
+    } else {
+        // Mode default 'alert'
+        popupBtn.style.display = 'inline-block';
+        popupCancelBtn.style.display = 'none';
+        popupBtn.innerText = actionBtnText; // Biasanya 'Tutup'
+    }
+
+    // Fungsi menutup pop-up
+    const closePopup = (callback) => {
         const popupContent = DOM.popup.querySelector('.popup');
         popupContent.style.animation = 'popOut 0.3s forwards cubic-bezier(0.6, -0.28, 0.735, 0.045)';
         setTimeout(() => {
             DOM.popup.style.display = 'none';
+            // Reset animasi untuk popIn berikutnya
             popupContent.style.animation = 'popIn 0.3s forwards cubic-bezier(0.17, 0.84, 0.44, 1)'; 
             if (callback) callback();
         }, 280);
     };
-    DOM.popupBtn.onkeydown = (e) => { if (e.key === 'Enter') DOM.popupBtn.click(); };
+
+    // Handler tombol OK (Konfirmasi)
+    popupBtn.onclick = () => {
+        closePopup(callbackOk);
+    };
+
+    // Handler tombol Batal
+    if (actionMode === 'confirm') {
+        popupCancelBtn.onclick = () => {
+            closePopup(callbackCancel); // Jika batal, tetap tutup pop-up dan panggil callbackCancel
+        };
+        // Fokuskan pada tombol Konfirmasi
+        popupBtn.focus();
+    } else {
+        // Fokuskan pada tombol Tutup
+        popupBtn.focus();
+    }
 }
 
 function showLoading(show) {
@@ -613,14 +663,19 @@ function showLoading(show) {
 function muatDataAwal() {
     showLoading(true);
     const promises = [
-        db.ref("keanggotaan").once("value").then(snap => {
+        // PATH BARU: keanggotaan_v2
+        db.ref("keanggotaan_v2").once("value").then(snap => {
             snap.forEach(child => {
                 dataKeanggotaan[child.key] = child.val();
             });
         }),
-        db.ref("buku").once("value").then(snap => {
+        // PATH BARU: buku_v2
+        db.ref("buku_v2").once("value").then(snap => {
             snap.forEach(child => {
-                dataBuku[child.key] = child.val();
+                // Tambahkan key (kode) ke dalam objek data buku agar mudah dicari di autocomplete
+                const book = child.val();
+                book.kode = child.key; 
+                dataBuku[child.key] = book;
             });
         })
     ];
@@ -645,7 +700,8 @@ function cekAnggota() {
     DOM.nisInput.value = '';
     showLoading(true);
     
-    db.ref("keanggotaan/" + nis).once("value").then(snap => {
+    // PATH BARU: keanggotaan_v2
+    db.ref("keanggotaan_v2/" + nis).once("value").then(snap => {
         if (snap.exists()) {
             anggotaAktif = { nis: nis, ...snap.val() };
             // Lanjutkan ke muatDipinjam tanpa mematikan loading
@@ -670,6 +726,12 @@ function setupAutocomplete(inputId, sourceData, searchKeys) {
     const resultsEl = document.getElementById(inputId.replace('Input', 'Autocomplete'));
     let selectedIndex = -1;
     const isBukuAutocomplete = inputId === 'kodeInput';
+    
+    // Fungsi baru untuk menutup hasil
+    const closeResults = () => {
+        resultsEl.style.display = 'none';
+        selectedIndex = -1;
+    };
 
     const renderResults = (matches) => {
         resultsEl.innerHTML = '';
@@ -687,7 +749,7 @@ function setupAutocomplete(inputId, sourceData, searchKeys) {
 
             li.onclick = () => {
                 inputEl.value = primaryKey;
-                resultsEl.style.display = 'none';
+                closeResults(); 
                 if (!isBukuAutocomplete) {
                     cekAnggota(); 
                 } else {
@@ -701,15 +763,12 @@ function setupAutocomplete(inputId, sourceData, searchKeys) {
     inputEl.oninput = () => {
         const query = inputEl.value.toLowerCase().trim();
         if (query.length < 2) {
-            resultsEl.style.display = 'none';
+            closeResults(); 
             return;
         }
 
         const matches = Object.keys(sourceData).map(key => {
-            const item = { ...sourceData[key] };
-            if (!isBukuAutocomplete) item.nis = key;
-            if (isBukuAutocomplete) item.kode = key;
-            return item;
+            return { ...sourceData[key], nis: sourceData[key].nis || key, kode: sourceData[key].kode || key };
         }).filter(item => {
             return searchKeys.some(key => String(item[key] || '').toLowerCase().includes(query));
         });
@@ -719,7 +778,7 @@ function setupAutocomplete(inputId, sourceData, searchKeys) {
 
     inputEl.onblur = () => {
         setTimeout(() => {
-            resultsEl.style.display = 'none';
+            closeResults(); 
         }, 200);
     };
     
@@ -757,11 +816,6 @@ function setupAutocomplete(inputId, sourceData, searchKeys) {
                 item.scrollIntoView({ block: 'nearest' });
             }
         });
-
-        if (selectedIndex !== -1) {
-            const text = items[selectedIndex].innerText.split(' - ')[0];
-            inputEl.value = text;
-        }
     };
 }
 
@@ -800,7 +854,7 @@ function tampilkanProfil(peminjamanData) {
                         <tr>
                             <th>Kode</th>
                             <th>Judul</th>
-                            <th>Tanggal Kembali</th>
+                            <th>Jatuh Tempo</th>
                             <th>Denda</th>
                             <th style="min-width: 180px;">Aksi</th>
                         </tr>
@@ -825,6 +879,9 @@ function tampilkanProfil(peminjamanData) {
             const tglKembaliStr = new Date(d.tanggalKembali).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
             const terlambatBadge = keterlambatan > 0 ? `<span style="color:var(--danger-color); font-size:0.8em; display:block; font-weight: 600;">(${keterlambatan} hr terlambat)</span>` : '';
             const dendaStyle = denda > 0 ? 'color:var(--danger-color); font-weight: 700;' : 'color:var(--success-color); font-weight: 600;';
+            
+            // Cek apakah ada denda untuk tombol perpanjang
+            const adaDenda = denda > 0;
 
             bodyContent += `
                 <tr>
@@ -836,7 +893,7 @@ function tampilkanProfil(peminjamanData) {
                         <button class="action-btn kembali" title="Kembalikan Buku" onclick="kembalikan('${key}', ${denda})">
                             <i class="fas fa-undo"></i> Kembali
                         </button>
-                        <button class="action-btn perpanjang" title="Perpanjang Peminjaman" onclick="perpanjangBuku('${key}', ${denda > 0})">
+                        <button class="action-btn perpanjang" title="Perpanjang Peminjaman" onclick="perpanjangBuku('${key}', ${adaDenda})">
                             <i class="fas fa-sync-alt"></i> Perpanjang
                         </button>
                     </td>
@@ -857,7 +914,7 @@ function tampilkanProfil(peminjamanData) {
         <div id="pinjam-view" class="${isMeminjam ? 'hidden' : ''}">
             <div class="autocomplete-container" style="margin-bottom: 15px;">
                 <label for="kodeInput">Kode Inventaris / Judul Buku</label>
-                <input type="text" id="kodeInput" placeholder="Ketik Kode atau Judul Buku">
+                <input type="text" id="kodeInput" placeholder="Ketik Kode atau Judul Buku" autocomplete="off">
                 <div id="kodeAutocomplete" class="autocomplete-results" style="display:none;"></div>
             </div>
             <button id="pinjamBtn" type="button" style="width:100%;" onclick="handlePinjam()">
@@ -869,6 +926,12 @@ function tampilkanProfil(peminjamanData) {
     
     DOM.modalBody.innerHTML = bodyContent;
     DOM.profilModal.style.display = "flex";
+    
+    // Perubahan: Tutup dropdown autocomplete NIS (Permintaan user)
+    const nisAutocompleteEl = document.getElementById('nisAutocomplete');
+    if (nisAutocompleteEl) {
+        nisAutocompleteEl.style.display = 'none';
+    }
     
     // Setup ulang autocomplete
     if (!isMeminjam) {
@@ -893,9 +956,8 @@ function closeProfilModal() {
 function muatDipinjam() {
     if (!anggotaAktif) return;
 
-    // Loading indicator sudah dipanggil di cekAnggota
-    
-    db.ref("peminjaman").orderByChild("nis").equalTo(anggotaAktif.nis).once("value").then(snap => {
+    // PATH BARU: peminjaman_v2
+    db.ref("peminjaman_v2").orderByChild("nis").equalTo(anggotaAktif.nis).once("value").then(snap => {
         
         const peminjamanData = snap.val() || {};
         
@@ -919,20 +981,24 @@ function handlePinjam() {
     showLoading(true);
     closeProfilModal(); 
 
-    db.ref("peminjaman").orderByChild("kode").equalTo(kode).once("value").then(snapCekPinjam => {
+    // PATH BARU: peminjaman_v2
+    db.ref("peminjaman_v2").orderByChild("kode").equalTo(kode).once("value").then(snapCekPinjam => {
         if (snapCekPinjam.exists()) {
             showLoading(false);
             showPopup(`Buku dengan kode **${kode}** sedang dipinjam oleh anggota lain!`);
             return;
         }
 
-        db.ref("buku/" + kode).once("value").then(snapBuku => {
+        // PATH BARU: buku_v2
+        db.ref("buku_v2/" + kode).once("value").then(snapBuku => {
             if (!snapBuku.exists()) {
                 showLoading(false);
                 showPopup(`Buku dengan kode **${kode}** tidak ditemukan!`);
                 return;
             }
-            const judul = snapBuku.val().judul;
+            
+            const bookData = snapBuku.val();
+            
             const today = new Date();
             const pinjam = today.toISOString().split("T")[0]; 
             const kembaliDate = new Date();
@@ -942,16 +1008,21 @@ function handlePinjam() {
             const data = {
                 nis: anggotaAktif.nis,
                 nama: anggotaAktif.keanggotaan,
-                blok: anggotaAktif.blok,
-                kode: kode,
-                judul: judul,
+                blok: anggotaAktif.blok, // Blok Anggota
                 tanggalPinjam: pinjam,
                 tanggalKembali: kembali,
+                
+                kode: kode, 
+                judul: bookData.judul,
+                pengarang: bookData.pengarang, 
+                blokBuku: bookData.blok, 
+                rak: bookData.rak 
             };
 
-            db.ref("peminjaman").push(data).then(() => {
+            // PATH BARU: peminjaman_v2
+            db.ref("peminjaman_v2").push(data).then(() => {
                 showLoading(false);
-                showPopup(`Peminjaman buku **${judul}** berhasil! Batas kembali: **${new Date(kembali).toLocaleDateString('id-ID')}**`, () => {
+                showPopup(`Peminjaman buku **${bookData.judul}** berhasil! Batas kembali: **${new Date(kembali).toLocaleDateString('id-ID')}**`, () => {
                     muatDipinjam(); 
                 });
             }).catch(error => {
@@ -965,55 +1036,88 @@ function handlePinjam() {
     });
 }
 
+// Perubahan: Menambahkan konfirmasi untuk Kembalikan (Batal/Konfirmasi)
 function kembalikan(key, denda) {
-    let msg = "Apakah Anda yakin ingin mengembalikan buku ini? Tindakan ini tidak dapat dibatalkan.";
+    let msg = "Apakah Anda yakin ingin **mengembalikan** buku ini? Tindakan ini tidak dapat dibatalkan.";
+    let iconColor = 'var(--primary-color)';
+
     if (denda > 0) {
-        msg = `<div style="color: var(--danger-color); font-weight: 600;"><i class="fas fa-exclamation-triangle"></i> Denda: Rp ${denda.toLocaleString('id-ID')}</div><br>Pastikan denda telah dibayar! Konfirmasi pengembalian buku?`;
-        DOM.popup.querySelector('i').style.color = 'var(--danger-color)';
+        msg = `<div style="color: var(--danger-color); font-weight: 600;"><i class="fas fa-exclamation-triangle"></i> Denda: Rp ${denda.toLocaleString('id-ID')}</div><br>Pastikan denda telah dibayar! Konfirmasi **pengembalian buku**?`;
+        iconColor = 'var(--danger-color)';
     }
 
-    // Tampilkan popup konfirmasi dengan callback
-    showPopup(msg, () => {
-        // Reset icon color
-        DOM.popup.querySelector('i').style.color = 'var(--primary-color)';
+    // Set icon color sebelum menampilkan popup
+    DOM.popup.querySelector('i').style.color = iconColor;
 
-        showLoading(true);
-        db.ref("peminjaman/" + key).remove().then(() => {
-            showLoading(false);
-            showPopup("✅ Buku berhasil dikembalikan.", () => {
-                muatDipinjam(); 
+    // Tampilkan popup konfirmasi
+    showPopup(
+        msg, 
+        // Callback OK: Lanjutkan Pengembalian
+        () => {
+            // Reset icon color
+            DOM.popup.querySelector('i').style.color = 'var(--primary-color)';
+            
+            showLoading(true);
+            // PATH BARU: peminjaman_v2
+            db.ref("peminjaman_v2/" + key).remove().then(() => {
+                showLoading(false);
+                showPopup("✅ Buku berhasil dikembalikan.", () => {
+                    muatDipinjam(); 
+                });
+            }).catch(error => {
+                showLoading(false);
+                showPopup("Gagal mengembalikan buku: " + error.message);
             });
-        }).catch(error => {
-            showLoading(false);
-            showPopup("Gagal mengembalikan buku: " + error.message);
-        });
-    });
+        }, 
+        // Callback Cancel: Batal (Kembali ke modal profil)
+        () => {
+             // Reset icon color
+            DOM.popup.querySelector('i').style.color = 'var(--primary-color)';
+            muatDipinjam(); // Muat ulang/tutup pop-up, kembali ke modal profil
+        },
+        'Ya, Kembalikan', // Action Button Text
+        'confirm' // Action Mode
+    );
 }
 
+// Perubahan: Menambahkan konfirmasi untuk Perpanjang (Batal/Konfirmasi)
 function perpanjangBuku(key, adaDenda) {
-    if (adaDenda) {
-        showPopup("🚫 Perpanjangan **DITOLAK**! Anggota memiliki denda. Mohon selesaikan denda terlebih dahulu.");
-        return;
-    }
+    // Pengecekan denda Dihapus. Perpanjangan diizinkan meskipun terlambat.
 
-    closeProfilModal();
-    showLoading(true);
+    let msg = `Apakah Anda yakin ingin **memperpanjang** peminjaman buku ini selama 4 hari lagi?`;
+    
+    // Tampilkan popup konfirmasi
+    showPopup(
+        msg, 
+        // Callback OK: Lanjutkan Perpanjangan
+        () => {
+            closeProfilModal();
+            showLoading(true);
 
-    const kembaliBaru = new Date();
-    kembaliBaru.setDate(kembaliBaru.getDate() + 4); 
-    const tglKembaliBaruStr = kembaliBaru.toISOString().split("T")[0];
+            const kembaliBaru = new Date();
+            kembaliBaru.setDate(kembaliBaru.getDate() + 4); 
+            const tglKembaliBaruStr = kembaliBaru.toISOString().split("T")[0];
 
-    db.ref("peminjaman/" + key).update({
-        tanggalKembali: tglKembaliBaruStr
-    }).then(() => {
-        showLoading(false);
-        showPopup(`🎉 Buku **berhasil diperpanjang**! Tanggal kembali baru: **${new Date(tglKembaliBaruStr).toLocaleDateString('id-ID')}**`, () => {
-            muatDipinjam(); 
-        });
-    }).catch(error => {
-        showLoading(false);
-        showPopup("Gagal memperpanjang buku: " + error.message);
-    });
+            // PATH BARU: peminjaman_v2
+            db.ref("peminjaman_v2/" + key).update({
+                tanggalKembali: tglKembaliBaruStr
+            }).then(() => {
+                showLoading(false);
+                showPopup(`🎉 Buku **berhasil diperpanjang**! Tanggal kembali baru: **${new Date(tglKembaliBaruStr).toLocaleDateString('id-ID')}**`, () => {
+                    muatDipinjam(); 
+                });
+            }).catch(error => {
+                showLoading(false);
+                showPopup("Gagal memperpanjang buku: " + error.message);
+            });
+        }, 
+        // Callback Cancel: Batal (Kembali ke modal profil)
+        () => {
+            muatDipinjam(); // Muat ulang/tutup pop-up, kembali ke modal profil
+        },
+        'Ya, Perpanjang', // Action Button Text
+        'confirm' // Action Mode
+    );
 }
 
 // --- INITIALIZATION ---
@@ -1034,6 +1138,5 @@ window.onload = () => {
     
     DOM.nisInput.focus();
 };
-</script>
-</body>
+</script></body>
 </html>
