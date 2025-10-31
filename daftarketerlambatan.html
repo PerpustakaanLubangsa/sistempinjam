@@ -2,131 +2,159 @@
 <html lang="id">
 <head>
 <meta charset="UTF-8">
-<title>Daftar Keterlambatan</title>
+<title>Daftar Keterlambatan - Lebar Penuh Final</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 <style>
-/* --- MODERN & MINIMALIST STYLING with CYAN HEADER --- */
-body {
-    margin: 0;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background: #f4f7f6;
-    color: #333;
-    padding: 20px; 
+/* --- Gaya Dasar --- */
+*, *::before, *::after {
+    box-sizing: border-box;
 }
 
-/* Container untuk Judul dan Tombol */
+:root {
+    --primary-blue: #3498db;
+    --danger-red: #e74c3c;
+    --success-green: #2ecc71;
+    --text-dark: #2c3e50;
+    --text-muted: #7f8c8d;
+    --bg-light: #f4f7f6;
+    --border-light: #eee;
+}
+
+body { 
+    font-family: 'Poppins', sans-serif; 
+    background: var(--bg-light); 
+    margin: 0; 
+    padding: 10px; 
+    color: var(--text-dark); 
+}
+
+/* --- Header dan Tombol Aksi --- */
 .header-container {
+    width: 100%; 
+    max-width: 100%; 
+    margin: 0 auto 15px auto;
+    padding: 0 10px; 
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 20px;
 }
 
 h2 {
-    color: #1f3a6a;
-    font-weight: 600;
+    color: var(--text-dark);
+    font-size: 1.6em; 
     margin: 0;
 }
 
+#totalTerlambat {
+    background: var(--danger-red);
+    color: #fff;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 1em;
+    font-weight: 700;
+}
+
 /* Tombol Salin */
-#copyTableBtn {
-    background-color: #00bcd4; /* Cyan - Warna yang sama dengan header tabel */
-    color: white;
+#copyToExcelBtn {
+    padding: 8px 12px;
+    background: var(--success-green);
+    color: #fff;
     border: none;
-    padding: 10px 15px;
     border-radius: 6px;
     cursor: pointer;
-    font-size: 14px;
-    font-weight: 500;
-    transition: background-color 0.3s, transform 0.1s, box-shadow 0.3s;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    font-weight: 600;
+    font-size: 1em;
+    transition: background-color 0.2s;
+}
+#copyToExcelBtn:hover {
+    background-color: #27ae60;
+}
+#copyToExcelBtn:disabled {
+    background-color: #bdc3c7;
+    cursor: not-allowed;
 }
 
-#copyTableBtn:hover {
-    background-color: #0097a7; /* Cyan yang lebih gelap saat hover */
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
-}
-
-#copyTableBtn:active {
-    transform: scale(0.98); /* Efek klik */
-}
-
-/* Pemberitahuan Salin */
-#copyMessage {
-    margin-left: 15px;
-    color: #28a745; /* Hijau */
-    font-size: 14px;
-    opacity: 0;
-    transition: opacity 0.5s ease-out;
-    font-weight: 500;
-}
-
-/* Container untuk Tabel */
-.table-container {
-    overflow-x: auto; /* Memungkinkan scrolling horizontal pada layar kecil */
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
-    border-radius: 3px;
+/* Pesan Status */
+#statusMessage {
+    text-align: center;
+    padding: 20px;
     background-color: #fff;
-    margin-top: 20px;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+    margin: 20px auto;
+    max-width: 600px;
+    display: none;
+    color: var(--text-muted);
 }
 
-table {
+/* --- Gaya Tabel --- */
+.table-container {
+    width: 100%;
+    max-width: 100%; 
+    overflow-x: hidden; 
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+    padding: 5px; 
+    margin: auto;
+}
+
+.terlambat-table {
     width: 100%;
     border-collapse: collapse;
-    margin: 0; 
+    font-size: 0.85em; 
 }
-th, td {
-    border: none;
-    padding: 12px 15px;
+
+.terlambat-table th, .terlambat-table td {
+    padding: 8px 5px; 
+    text-align: left;
+    border-bottom: 1px solid var(--border-light);
+    white-space: normal; 
 }
-th {
-    /* --- CYAN COLOR FOR HEADER (TH) --- */
-    background: #00bcd4; 
+
+.terlambat-table th {
+    background-color: var(--primary-blue);
     color: #fff;
     font-weight: 600;
-    border-bottom: 2px solid #0097a7;
-    text-align: center;
-    position: sticky; /* Agar header tetap terlihat saat scroll vertikal */
-    top: 0;
-    z-index: 10;
-}
-td {
-    border-bottom: 1px solid #eee;
-}
-tr:nth-child(even) {
-    background: #f9f9f9;
-}
-tr:hover {
-    background-color: #e6f7ff;
+    text-transform: uppercase;
 }
 
-/* Specific Column Alignment for Better Readability */
-td:nth-child(-n+4), th:nth-child(-n+4) {
-    text-align: left;
-}
-td:nth-child(5), th:nth-child(5) {
-    text-align: center; /* Harus Kembali (Date) */
-}
-td:nth-child(6), th:nth-child(6), td:nth-child(7), th:nth-child(7) {
-    text-align: right; /* Keterlambatan, Denda (Numbers) */
+/* **ALOKASI LEBAR KOLOM (Total 100%)** */
+.terlambat-table th:nth-child(1) { width: 4%; }   /* No */
+.terlambat-table th:nth-child(2) { width: 18%; }  /* Nama Peminjam */
+.terlambat-table th:nth-child(3) { width: 8%; }   /* Blok (Blok Peminjam) */
+.terlambat-table th:nth-child(4) { width: 35%; }  /* Judul Buku */
+.terlambat-table th:nth-child(5) { width: 15%; }  /* Pengarang */
+.terlambat-table th:nth-child(6) { width: 7%; }   /* Hari (Hari Terlambat) */
+.terlambat-table th:nth-child(7) { width: 13%; }  /* Total Denda */
+
+.terlambat-table tr:hover {
+    background-color: #f8f8f8;
 }
 
-/* Media Query untuk Tampilan Responsif */
-@media screen and (max-width: 768px) {
-    body {
-        padding: 15px;
+.terlambat-table .terlambat-row {
+    background-color: #fff3f3; 
+}
+
+/* Kolom Penting */
+.kolom-nama { font-weight: 600; color: var(--text-dark); }
+.kolom-denda { font-weight: 700; color: var(--danger-red); }
+.kolom-hari { font-weight: 600; color: #d35400; text-align: center;} 
+
+/* Responsif */
+@media (max-width: 768px) {
+    body { padding: 5px; }
+    .header-container { flex-direction: column; align-items: flex-start; gap: 8px; padding: 0;}
+    h2 { font-size: 1.4em; }
+    .table-container { 
+        overflow-x: auto; 
+        padding: 5px;
     }
-    .header-container {
-        flex-direction: column;
-        align-items: flex-start;
-    }
-    h2 {
-        margin-bottom: 15px;
-    }
-    #copyTableBtn {
-        width: 100%;
-        margin-bottom: 10px;
+    .terlambat-table {
+        min-width: 850px; 
     }
 }
 </style>
@@ -134,151 +162,262 @@ td:nth-child(6), th:nth-child(6), td:nth-child(7), th:nth-child(7) {
 <body>
 
 <div class="header-container">
-    <h2>Daftar Keterlambatan Pengembalian Buku</h2>
-    <div>
-        <button id="copyTableBtn" onclick="copyTableData()">
-            Salin Data Tabel
+    <h2><i class="fas fa-calendar-times" style="color:var(--danger-red); margin-right: 5px;"></i> Daftar Peminjaman Terlambat</h2>
+    <div style="display: flex; align-items: center; gap: 10px;">
+        <div id="totalTerlambat"><i class="fas fa-exclamation-triangle"></i> Total Keterlambatan: 0</div>
+        <button id="copyToExcelBtn" disabled onclick="copyTableToClipboard()">
+            <i class="fas fa-copy"></i> Salin ke Excel
         </button>
-        <span id="copyMessage">Disalin!</span>
     </div>
 </div>
 
+<div id="statusMessage"></div>
+
 <div class="table-container">
-    <table>
-      <thead>
-        <tr>
-          <th>Nama</th>
-          <th>Blok</th>
-          <th>Judul Buku</th>
-          <th>Kode Inventaris</th>
-          <th>Harus Kembali</th>
-          <th>Keterlambatan (hari)</th>
-          <th>Denda</th>
-        </tr>
-      </thead>
-      <tbody id="lateBody"></tbody>
+    <table class="terlambat-table" id="dataTerlambatTable">
+        <thead>
+            <tr>
+                <th>No</th>
+                <th>Nama Peminjam</th>
+                <th>Blok</th>
+                <th>Judul Buku</th>
+                <th>Pengarang</th>
+                <th>Hari</th>
+                <th>Total Denda</th>
+            </tr>
+        </thead>
+        <tbody id="terlambatTableBody">
+            </tbody>
     </table>
 </div>
 
+
 <script>
-// Konfigurasi Firebase Anda
+// --- Konfigurasi Firebase (GANTI DENGAN KONFIGURASI ANDA) ---
 const firebaseConfig = {
-  apiKey: "AIzaSyByw2om-sKHqgCWBDJcE7FEtONoUoJbn9M",
-  authDomain: "traying-29bf4.firebaseapp.com",
-  databaseURL: "https://traying-29bf4-default-rtdb.firebaseio.com",
-  projectId: "traying-29bf4",
-  storageBucket: "traying-29bf4.appspot.com",
-  messagingSenderId: "42080663883",
-  appId: "1:42080663883:web:58f28d5d1164204457d030"
+    apiKey: "AIzaSyByw2om-sKHqgCWBDJcE7FEtONoUoJbn9M",
+    authDomain: "traying-29bf4.firebaseapp.com",
+    databaseURL: "https://traying-29bf4-default-rtdb.firebaseio.com",
+    projectId: "traying-29bf4",
+    storageBucket: "traying-29bf4.appspot.com",
+    messagingSenderId: "42080663883",
+    appId: "1:42080663883:web:58f28d5d1164204457d030"
 };
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
+const PEMINJAMAN_PATH = "peminjaman_v2"; 
+const DENDA_PER_HARI = 1000; 
 
-/**
- * Memformat angka menjadi format Rupiah.
- * @param {number} num - Angka yang akan diformat.
- * @returns {string} String dalam format Rupiah.
- */
-function formatRupiah(num){ 
-    return "Rp " + num.toLocaleString("id-ID"); 
+// --- ELEMEN UTAMA ---
+const tableBody = document.getElementById("terlambatTableBody");
+const statusMessage = document.getElementById('statusMessage');
+const totalTerlambatDisplay = document.getElementById('totalTerlambat');
+const copyBtn = document.getElementById('copyToExcelBtn');
+
+// --- HELPER FUNCTIONS ---
+
+function showStatus(message, isVisible = true) {
+    statusMessage.innerHTML = message;
+    statusMessage.style.display = isVisible ? 'block' : 'none';
+    document.querySelector('.table-container').style.display = isVisible ? 'none' : 'block';
+    copyBtn.disabled = isVisible; 
 }
 
-/**
- * Memuat dan memperbarui data keterlambatan dari Firebase ke dalam tabel.
- */
-function updateKeterlambatan(){
-  const tbody = document.getElementById('lateBody');
-  // Menambahkan loader atau pesan 'Memuat...' sementara data diambil
-  tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding: 20px; color: #999;">Memuat data...</td></tr>'; 
-  
-  db.ref('peminjaman').on('value', snap => {
-    tbody.innerHTML = '';
-    const hariIni = new Date();
-    hariIni.setHours(0,0,0,0);
-    let hasLateData = false;
-
-    snap.forEach(child => {
-      const data = child.val();
-      
-      // Filter data: hanya tampilkan yang sudah lewat tanggal kembali DAN belum dikembalikan
-      // Asumsi: jika ada 'tanggalKembali' (dari field Firebase) dan hari ini sudah melewatinya
-      // PENTING: Pastikan logika field 'tanggalKembali' di Firebase adalah TANGGAL HARUS KEMBALI
-      // Jika Anda memiliki field terpisah untuk 'tanggalPengembalianAktual', gunakan field tersebut untuk filter.
-      if(!data.tanggalKembali) return; 
-      
-      const tglKembali = new Date(data.tanggalKembali);
-      tglKembali.setHours(0,0,0,0);
-
-      if(hariIni > tglKembali){
-        hasLateData = true;
-        const diffDays = Math.floor((hariIni - tglKembali)/(1000*60*60*24));
-        const denda = diffDays * 1000; // Asumsi denda Rp 1.000 per hari
-
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td>${data.nama || '-'}</td>
-          <td>${data.blok || '-'}</td>
-          <td>${data.judul || '-'}</td>
-          <td>${data.kode || '-'}</td>
-          <td>${data.tanggalKembali || '-'}</td>
-          <td>${diffDays}</td>
-          <td>${formatRupiah(denda)}</td>
-        `;
-        tbody.appendChild(tr);
-      }
-    });
-
-    if (!hasLateData) {
-        // Tampilkan pesan jika tidak ada data keterlambatan
-        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding: 20px; color: #555; font-style: italic;">Tidak ada data keterlambatan saat ini.</td></tr>';
-    }
-  });
+function formatRupiah(angka) {
+    if (typeof angka !== 'number' || angka < 0) return 'Rp0';
+    const reverse = Math.floor(angka).toString().split('').reverse().join('');
+    const ribuan = reverse.match(/\d{1,3}/g);
+    const result = ribuan.join('.').split('').reverse().join('');
+    return 'Rp' + result;
 }
 
-/**
- * Menyalin data dari seluruh tabel (termasuk header) ke clipboard.
- */
-function copyTableData() {
-    const table = document.querySelector('table');
-    if (!table) return;
-
-    let textToCopy = "";
+function hitungDenda(tanggalKembaliStr) {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); 
     
-    // Ambil teks dari Header (th)
-    const headerRow = table.tHead.rows[0];
-    let headerText = [];
-    for (let i = 0; i < headerRow.cells.length; i++) {
-        headerText.push(headerRow.cells[i].innerText);
-    }
-    textToCopy += headerText.join('\t') + '\n'; // Pisahkan kolom dengan Tab
+    const tglKembali = new Date(tanggalKembaliStr);
+    tglKembali.setHours(0, 0, 0, 0); 
 
-    // Ambil teks dari Body (td)
-    const bodyRows = table.tBodies[0].rows;
-    for (let i = 0; i < bodyRows.length; i++) {
-        let rowText = [];
-        for (let j = 0; j < bodyRows[i].cells.length; j++) {
-            rowText.push(bodyRows[i].cells[j].innerText);
-        }
-        textToCopy += rowText.join('\t') + '\n'; // Pisahkan kolom dengan Tab dan baris dengan baris baru
+    const selisihMs = today.getTime() - tglKembali.getTime();
+    
+    let hariTerlambat = 0;
+    if (selisihMs > 0) {
+        hariTerlambat = Math.floor(selisihMs / (1000 * 60 * 60 * 24)); 
     }
-
-    // Salin ke clipboard
-    navigator.clipboard.writeText(textToCopy).then(() => {
-        // Tampilkan pesan 'Disalin!'
-        const msg = document.getElementById('copyMessage');
-        msg.style.opacity = 1;
-        setTimeout(() => {
-            msg.style.opacity = 0;
-        }, 2000);
-    }).catch(err => {
-        console.error('Gagal menyalin:', err);
-        alert('Gagal menyalin data tabel. Periksa konsol untuk detail.');
-    });
+    
+    if (hariTerlambat > 0) {
+        const totalDenda = hariTerlambat * DENDA_PER_HARI;
+        return {
+            terlambat: true,
+            hari: hariTerlambat,
+            denda: totalDenda,
+            dendaFormatted: formatRupiah(totalDenda)
+        };
+    } else {
+        return {
+            terlambat: false,
+            hari: 0,
+            denda: 0
+        };
+    }
 }
 
 
-// Inisialisasi
-updateKeterlambatan();
+// --- FUNGSI RENDER TABEL ---
+
+function renderTerlambatTable(data) {
+    tableBody.innerHTML = "";
+    let no = 1;
+    let totalTerlambatCount = 0;
+
+    for (const key in data) {
+        const d = data[key];
+        const dendaInfo = hitungDenda(d.tanggalKembali);
+        
+        if (dendaInfo.terlambat) {
+            totalTerlambatCount++;
+            const row = tableBody.insertRow();
+            row.className = "terlambat-row";
+            
+            // Kolom 1: No
+            row.insertCell().textContent = no++; 
+            
+            // Kolom 2: Nama Peminjam
+            const cellNama = row.insertCell();
+            cellNama.className = "kolom-nama";
+            cellNama.textContent = d.nama || '-';
+
+            // Kolom 3: Blok
+            row.insertCell().textContent = d.blok || '-';
+
+            // Kolom 4: Judul Buku
+            row.insertCell().textContent = d.judul || '-';
+            
+            // Kolom 5: Pengarang
+            row.insertCell().textContent = d.pengarang || '-';
+            
+            // Kolom 6: Hari
+            const cellHariTerlambat = row.insertCell();
+            cellHariTerlambat.className = "kolom-hari";
+            cellHariTerlambat.textContent = `${dendaInfo.hari}`; 
+            
+            // Kolom 7: Total Denda
+            const cellDenda = row.insertCell();
+            cellDenda.className = "kolom-denda";
+            cellDenda.textContent = dendaInfo.dendaFormatted;
+        }
+    }
+    
+    totalTerlambatDisplay.innerHTML = `<i class="fas fa-exclamation-triangle"></i> Total Keterlambatan: ${totalTerlambatCount}`;
+
+    if (totalTerlambatCount === 0) {
+        showStatus(`<i class="fas fa-thumbs-up" style="color:var(--success-green);"></i> **SEMUA AMAN!** Tidak ada peminjaman yang terlambat saat ini.`);
+    } else {
+        showStatus("", false);
+        copyBtn.disabled = false;
+    }
+}
+
+// --- FUNGSI SALIN KE EXCEL (Clipboard) ---
+function copyTableToClipboard() {
+    const table = document.getElementById('dataTerlambatTable');
+    
+    if (!table) {
+        alert("Error: Tabel tidak ditemukan.");
+        return;
+    }
+    
+    // 1. Buat elemen DIV temporer untuk menampung konten yang akan disalin
+    const tempDiv = document.createElement('div');
+    
+    // 2. Kloning tabel, tetapi sebelum dikloning, modifikasi data denda
+    const clonedTable = table.cloneNode(true);
+    
+    // Lakukan pembersihan format pada kloningan tabel
+    clonedTable.querySelectorAll('tbody tr').forEach(row => {
+        const dendaCell = row.cells[6]; // Kolom Total Denda adalah index 6
+        const hariCell = row.cells[5];   // Kolom Hari adalah index 5
+        
+        // Bersihkan Total Denda (agar hanya angka)
+        let dendaText = dendaCell.textContent.trim();
+        dendaCell.textContent = dendaText.replace('Rp', '').replace(/\./g, '').replace(/,/g, '');
+        
+        // Bersihkan Hari (agar hanya angka)
+        hariCell.textContent = parseInt(hariCell.textContent) || 0;
+    });
+
+    // 3. Masukkan tabel kloning yang sudah bersih ke DIV temporer
+    tempDiv.appendChild(clonedTable);
+    
+    // 4. Masukkan DIV temporer ke body dan posisikan agar tidak terlihat
+    tempDiv.style.position = 'absolute';
+    tempDiv.style.left = '-9999px';
+    document.body.appendChild(tempDiv);
+    
+    // 5. Pilih konten dari DIV temporer
+    const selection = window.getSelection();
+    const range = document.createRange();
+    range.selectNodeContents(tempDiv);
+    selection.removeAllRanges();
+    selection.addRange(range);
+    
+    let success = false;
+    try {
+        // 6. Eksekusi perintah salin (metode yang paling universal untuk tabel HTML)
+        success = document.execCommand('copy'); 
+    } catch (err) {
+        console.error('Gagal menyalin:', err);
+    }
+    
+    // 7. Bersihkan: hapus elemen dan selection
+    document.body.removeChild(tempDiv);
+    selection.removeAllRanges();
+
+    // 8. Beri umpan balik (feedback)
+    if (success) {
+        copyBtn.innerHTML = '<i class="fas fa-check"></i> Berhasil Disalin!';
+        setTimeout(() => {
+            copyBtn.innerHTML = '<i class="fas fa-copy"></i> Salin ke Excel';
+        }, 3000);
+    } else {
+        // Coba gunakan navigator.clipboard sebagai fallback jika execCommand gagal
+        const tempTextarea = document.createElement('textarea');
+        tempTextarea.value = tempDiv.innerText; // Mengambil data sebagai teks tab-delimited fallback
+        document.body.appendChild(tempTextarea);
+        tempTextarea.select();
+        
+        navigator.clipboard.writeText(tempTextarea.value).then(() => {
+             copyBtn.innerHTML = '<i class="fas fa-check"></i> Berhasil Salin (Fallback)!';
+             document.body.removeChild(tempTextarea);
+             setTimeout(() => {
+                copyBtn.innerHTML = '<i class="fas fa-copy"></i> Salin ke Excel';
+             }, 3000);
+        }).catch(() => {
+             alert('Gagal menyalin data. Pastikan Anda memberikan izin clipboard.');
+             document.body.removeChild(tempTextarea);
+             copyBtn.innerHTML = '<i class="fas fa-exclamation-circle"></i> Gagal Salin';
+             setTimeout(() => {
+                copyBtn.innerHTML = '<i class="fas fa-copy"></i> Salin ke Excel';
+             }, 3000);
+        });
+    }
+}
+
+
+// --- INITAL DATA LOAD ---
+showStatus("<i class='fas fa-spinner fa-spin'></i> Memuat data keterlambatan...", true); 
+
+db.ref(PEMINJAMAN_PATH).on("value", snap => {
+    if (snap.exists()) {
+        renderTerlambatTable(snap.val());
+    } else {
+        renderTerlambatTable({});
+        showStatus(`<i class="fas fa-thumbs-up" style="color:var(--success-green);"></i> **SEMUA AMAN!** Tidak ada peminjaman yang terlambat saat ini.`);
+    }
+}, error => {
+    console.error("Error loading data from Firebase:", error);
+    showStatus(`Gagal memuat data: ${error.message}`);
+});
 </script>
 
 </body>
