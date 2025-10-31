@@ -116,6 +116,9 @@ td:nth-child(2) {text-align: left;}
     <button type="submit">Tambah</button>
   </form>
 
+  <div style="margin-bottom: 15px;">
+    <input type="text" id="inputPencarian" placeholder="Cari Judul, Pengarang, Inventaris, Blok, atau Rak..." style="width: 98%;">
+  </div>
   <div>
     <p><b>Upload Excel (.xlsx)</b> dengan kolom: Inventaris | Judul | **Pengarang | Blok | Rak**</p>
     <input type="file" id="uploadExcel" accept=".xlsx,.xls">
@@ -187,6 +190,82 @@ const db = firebase.database();
 // **PATH PENYIMPANAN YANG DIGUNAKAN**
 const DATA_PATH_AKTIF = "buku_v2"; 
 
+// Variabel Global untuk Pencarian
+let lastSnapshot = null;
+const tbody = document.getElementById("dataBuku");
+const inputPencarian = document.getElementById("inputPencarian");
+
+// ======================================================================
+// FUNGSI PENCARIAN & TAMPILAN
+// ======================================================================
+
+/**
+ * Memfilter dan menampilkan data buku berdasarkan kata kunci.
+ */
+function tampilkanData(snapshot, kataKunci = "") {
+  tbody.innerHTML = "";
+  const kataKunciLower = kataKunci.toLowerCase().trim();
+  let hasilDitemukan = false;
+
+  snapshot.forEach(child => {
+    const inv = child.key;
+    const d = child.val();
+    
+    // Gabungkan semua data menjadi satu string untuk pencarian
+    const teksData = `${inv} ${d.judul || ''} ${d.pengarang || ''} ${d.blok || ''} ${d.rak || ''}`.toLowerCase();
+    
+    // Tampilkan hanya jika kata kunci kosong ATAU data mengandung kata kunci
+    if (kataKunciLower === "" || teksData.includes(kataKunciLower)) {
+      
+      const dataString = encodeURIComponent(JSON.stringify({
+          judul: d.judul || '',
+          pengarang: d.pengarang || '',
+          blok: d.blok || '',
+          rak: d.rak || ''
+      }));
+
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>${inv}</td>
+        <td style="text-align: left;">${d.judul || ''}</td>
+        <td>${d.pengarang || ''}</td>
+        <td>${d.blok || ''}</td>
+        <td>${d.rak || ''}</td>
+        <td>
+          <button class="action-btn edit" onclick="bukaEdit('${inv}','${dataString}')">Edit</button>
+          <button class="action-btn delete" onclick="bukaHapus('${inv}')">Hapus</button>
+        </td>`;
+      tbody.appendChild(tr);
+      hasilDitemukan = true;
+    }
+  });
+
+  if (!hasilDitemukan) {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `<td colspan="6">Tidak ada buku ditemukan.</td>`;
+    tbody.appendChild(tr);
+  }
+}
+
+// Tampilkan data (Read/Realtime Update) - MENGAMBIL DATA DARI FIREBASE
+db.ref(DATA_PATH_AKTIF).on("value", snap => {
+  lastSnapshot = snap; // Simpan snapshot terbaru
+  // Panggil fungsi tampilan dengan kata kunci saat ini
+  tampilkanData(lastSnapshot, inputPencarian.value);
+});
+
+// Event listener untuk input pencarian (FILTER DATA LOKAL)
+inputPencarian.addEventListener("keyup", () => {
+  if (lastSnapshot) {
+    // Panggil ulang fungsi tampilan dengan snapshot yang tersimpan
+    tampilkanData(lastSnapshot, inputPencarian.value);
+  }
+});
+
+// ======================================================================
+// FUNGSI CRUD LAINNYA
+// ======================================================================
+
 // Tambah buku
 document.getElementById("formTambah").addEventListener("submit", e=>{
   e.preventDefault();
@@ -219,7 +298,7 @@ document.getElementById("uploadExcel").addEventListener("change", e=>{
     const sheet = workbook.Sheets[workbook.SheetNames[0]];
     const rows = XLSX.utils.sheet_to_json(sheet);
     rows.forEach(r=>{
-      // Memastikan semua kolom Excel ada (tanpa Penerbit)
+      // Memastikan semua kolom Excel ada
       if(r.Inventaris && r.Judul && r.Pengarang && r.Blok && r.Rak){
         db.ref(DATA_PATH_AKTIF + "/"+r.Inventaris).set({
             judul: r.Judul,
@@ -229,41 +308,17 @@ document.getElementById("uploadExcel").addEventListener("change", e=>{
         });
       }
     });
+    // Reset file input
+    e.target.value = '';
   };
   reader.readAsArrayBuffer(file);
 });
 
-// Tampilkan data
-const tbody = document.getElementById("dataBuku");
-db.ref(DATA_PATH_AKTIF).on("value", snap=>{
-  tbody.innerHTML="";
-  snap.forEach(child=>{
-    const d=child.val();
-    const tr=document.createElement("tr");
-
-    const dataString = encodeURIComponent(JSON.stringify({
-        judul: d.judul || '',
-        pengarang: d.pengarang || '',
-        blok: d.blok || '',
-        rak: d.rak || ''
-    }));
-
-    tr.innerHTML=`
-      <td>${child.key}</td>
-      <td style="text-align: left;">${d.judul || ''}</td>
-      <td>${d.pengarang || ''}</td>
-      <td>${d.blok || ''}</td>
-      <td>${d.rak || ''}</td>
-      <td>
-        <button class="action-btn edit" onclick="bukaEdit('${child.key}','${dataString}')">Edit</button>
-        <button class="action-btn delete" onclick="bukaHapus('${child.key}')">Hapus</button>
-      </td>`;
-    tbody.appendChild(tr);
-  });
-});
-
 // Popup kontrol
 function tutupPopup(id){document.getElementById(id).style.display="none";}
+let editINV=null;
+let hapusINV=null;
+
 function bukaEdit(inv, dataString){
   editINV=inv;
   const d = JSON.parse(decodeURIComponent(dataString));
@@ -287,7 +342,6 @@ function bukaHapusSemua(){
 }
 
 // Edit simpan
-let editINV=null;
 document.getElementById("btnSimpanEdit").addEventListener("click",()=>{
   const judul = document.getElementById("editJudul").value.trim();
   const pengarang = document.getElementById("editPengarang").value.trim();
@@ -309,7 +363,6 @@ document.getElementById("btnSimpanEdit").addEventListener("click",()=>{
 });
 
 // Hapus satu
-let hapusINV=null;
 document.getElementById("btnHapusConfirm").addEventListener("click",()=>{
   if(hapusINV){
     db.ref(DATA_PATH_AKTIF + "/"+hapusINV).remove();
