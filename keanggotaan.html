@@ -68,6 +68,7 @@ th, td {
   background:rgba(0,0,0,0.6);
   justify-content:center;
   align-items:center;
+  z-index: 1000; /* Penting agar muncul di atas */
 }
 .popup {
   background:#fff;
@@ -75,6 +76,7 @@ th, td {
   border-radius:10px;
   width:300px;
   text-align:center;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.3);
 }
 .popup input {width:90%;}
 </style>
@@ -106,24 +108,21 @@ th, td {
     <tbody id="dataAnggota"></tbody>
   </table>
 
-  <!-- Tombol Hapus Semua -->
   <div style="margin-top:15px; text-align:right;">
     <button class="action-btn delete" onclick="bukaHapusSemua()">Hapus Semua Data</button>
   </div>
 </div>
 
-<!-- Popup Edit -->
 <div class="popup-overlay" id="popupEdit">
   <div class="popup">
     <h3>Edit Data</h3>
-    <input type="text" id="editNama"><br>
-    <input type="text" id="editBlok"><br>
+    <input type="text" id="editNama" placeholder="Keanggotaan"><br>
+    <input type="text" id="editBlok" placeholder="Blok"><br>
     <button id="btnSimpanEdit">Simpan</button>
     <button onclick="tutupPopup('popupEdit')">Batal</button>
   </div>
 </div>
 
-<!-- Popup Hapus -->
 <div class="popup-overlay" id="popupHapus">
   <div class="popup">
     <h3>Konfirmasi Hapus</h3>
@@ -133,7 +132,6 @@ th, td {
   </div>
 </div>
 
-<!-- Popup Hapus Semua -->
 <div class="popup-overlay" id="popupHapusSemua">
   <div class="popup">
     <h3>Konfirmasi Hapus Semua</h3>
@@ -144,7 +142,7 @@ th, td {
 </div>
 
 <script>
-// Konfigurasi Firebase
+// --- KONFIGURASI FIREBASE ---
 const firebaseConfig = {
   apiKey: "AIzaSyByw2om-sKHqgCWBDJcE7FEtONoUoJbn9M",
   authDomain: "traying-29bf4.firebaseapp.com",
@@ -157,19 +155,23 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
-// Tambah data
+// **PATH PENYIMPANAN VERSI BARU**
+const KEANGGOTAAN_PATH = "keanggotaan_v2"; 
+
+// Tambah data (Create)
 document.getElementById("formTambah").addEventListener("submit", e=>{
   e.preventDefault();
   const nis = document.getElementById("nis").value.trim();
   const nama = document.getElementById("nama").value.trim();
   const blok = document.getElementById("blok").value.trim();
   if(nis && nama && blok){
-    db.ref("keanggotaan/"+nis).set({keanggotaan:nama, blok:blok});
+    // Menggunakan KEANGGOTAAN_PATH
+    db.ref(KEANGGOTAAN_PATH + "/" + nis).set({keanggotaan:nama, blok:blok});
     e.target.reset();
   }
 });
 
-// Upload Excel
+// Upload Excel (Bulk Create)
 document.getElementById("uploadExcel").addEventListener("change", e=>{
   const file = e.target.files[0];
   if(!file) return;
@@ -181,19 +183,23 @@ document.getElementById("uploadExcel").addEventListener("change", e=>{
     const rows = XLSX.utils.sheet_to_json(sheet);
     rows.forEach(r=>{
       if(r.NIS && r.Keanggotaan && r.Blok){
-        db.ref("keanggotaan/"+r.NIS).set({
+        // Menggunakan KEANGGOTAAN_PATH
+        db.ref(KEANGGOTAAN_PATH + "/" + r.NIS).set({
           keanggotaan:r.Keanggotaan,
           blok:r.Blok
         });
       }
     });
+    // Reset file input agar bisa upload file yang sama lagi
+    e.target.value = ''; 
   };
   reader.readAsArrayBuffer(file);
 });
 
-// Tampilkan data
+// Tampilkan data (Read/Realtime Update)
 const tbody = document.getElementById("dataAnggota");
-db.ref("keanggotaan").on("value", snap=>{
+// Menggunakan KEANGGOTAAN_PATH
+db.ref(KEANGGOTAAN_PATH).on("value", snap=>{
   tbody.innerHTML="";
   snap.forEach(child=>{
     const d=child.val();
@@ -210,8 +216,11 @@ db.ref("keanggotaan").on("value", snap=>{
   });
 });
 
-// Popup kontrol
+// Popup kontrol & Variabel Global
 function tutupPopup(id){document.getElementById(id).style.display="none";}
+let editNIS=null;
+let hapusNIS=null;
+
 function bukaEdit(nis,nama,blok){
   editNIS=nis;
   document.getElementById("editNama").value=nama;
@@ -229,29 +238,30 @@ function bukaHapusSemua(){
   document.getElementById("btnHapusSemuaConfirm").focus();
 }
 
-// Edit simpan
-let editNIS=null;
+// Edit simpan (Update)
 document.getElementById("btnSimpanEdit").addEventListener("click",()=>{
   const nama=document.getElementById("editNama").value.trim();
   const blok=document.getElementById("editBlok").value.trim();
   if(editNIS && nama && blok){
-    db.ref("keanggotaan/"+editNIS).update({keanggotaan:nama,blok:blok});
+    // Menggunakan KEANGGOTAAN_PATH
+    db.ref(KEANGGOTAAN_PATH + "/" + editNIS).update({keanggotaan:nama,blok:blok});
     tutupPopup("popupEdit");
   }
 });
 
-// Hapus satu
-let hapusNIS=null;
+// Hapus satu (Delete)
 document.getElementById("btnHapusConfirm").addEventListener("click",()=>{
   if(hapusNIS){
-    db.ref("keanggotaan/"+hapusNIS).remove();
+    // Menggunakan KEANGGOTAAN_PATH
+    db.ref(KEANGGOTAAN_PATH + "/" + hapusNIS).remove();
     tutupPopup("popupHapus");
   }
 });
 
-// Hapus semua
+// Hapus semua (Bulk Delete)
 document.getElementById("btnHapusSemuaConfirm").addEventListener("click",()=>{
-  db.ref("keanggotaan").remove().then(()=>tutupPopup("popupHapusSemua"));
+  // Menggunakan KEANGGOTAAN_PATH
+  db.ref(KEANGGOTAAN_PATH).remove().then(()=>tutupPopup("popupHapusSemua"));
 });
 
 // Akses Enter di popup
