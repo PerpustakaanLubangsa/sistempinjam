@@ -91,6 +91,9 @@ th, td {
     <button type="submit">Tambah</button>
   </form>
 
+  <div style="margin-bottom: 15px;">
+    <input type="text" id="inputPencarian" placeholder="Cari NIS, Keanggotaan, atau Blok..." style="width: 98%;">
+  </div>
   <div>
     <p><b>Upload Excel (.xlsx)</b> dengan kolom: NIS | Keanggotaan | Blok</p>
     <input type="file" id="uploadExcel" accept=".xlsx,.xls">
@@ -158,6 +161,74 @@ const db = firebase.database();
 // **PATH PENYIMPANAN VERSI BARU**
 const KEANGGOTAAN_PATH = "keanggotaan_v2"; 
 
+// Variabel untuk menyimpan snapshot terakhir dari Firebase
+let lastSnapshot = null;
+const tbody = document.getElementById("dataAnggota");
+const inputPencarian = document.getElementById("inputPencarian");
+
+
+// ======================================================================
+// FUNGSI PENCARIAN & TAMPILAN
+// ======================================================================
+
+/**
+ * Memfilter dan menampilkan data keanggotaan berdasarkan kata kunci.
+ * Dipanggil saat data Firebase berubah dan saat input pencarian diketik.
+ */
+function tampilkanData(snapshot, kataKunci = "") {
+  tbody.innerHTML = "";
+  const kataKunciLower = kataKunci.toLowerCase().trim();
+  let hasilDitemukan = false;
+
+  snapshot.forEach(child => {
+    const nis = child.key;
+    const d = child.val();
+    
+    // String data yang akan dicari
+    const teksData = `${nis} ${d.keanggotaan} ${d.blok}`.toLowerCase();
+    
+    // Tampilkan hanya jika kata kunci kosong ATAU data mengandung kata kunci
+    if (kataKunciLower === "" || teksData.includes(kataKunciLower)) {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>${nis}</td>
+        <td>${d.keanggotaan}</td>
+        <td>${d.blok}</td>
+        <td>
+          <button class="action-btn edit" onclick="bukaEdit('${nis}','${d.keanggotaan}','${d.blok}')">Edit</button>
+          <button class="action-btn delete" onclick="bukaHapus('${nis}')">Hapus</button>
+        </td>`;
+      tbody.appendChild(tr);
+      hasilDitemukan = true;
+    }
+  });
+
+  if (!hasilDitemukan) {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `<td colspan="4">Tidak ada data ditemukan.</td>`;
+    tbody.appendChild(tr);
+  }
+}
+
+// Tampilkan data (Read/Realtime Update)
+db.ref(KEANGGOTAAN_PATH).on("value", snap => {
+  lastSnapshot = snap; // Simpan snapshot terbaru
+  // Panggil fungsi tampilan dengan kata kunci saat ini
+  tampilkanData(lastSnapshot, inputPencarian.value);
+});
+
+// Event listener untuk input pencarian (memanggil ulang fungsi tampilan)
+inputPencarian.addEventListener("keyup", () => {
+  if (lastSnapshot) {
+    // Panggil ulang fungsi tampilan dengan snapshot yang tersimpan
+    tampilkanData(lastSnapshot, inputPencarian.value);
+  }
+});
+
+// ======================================================================
+// FUNGSI CRUD LAINNYA
+// ======================================================================
+
 // Tambah data (Create)
 document.getElementById("formTambah").addEventListener("submit", e=>{
   e.preventDefault();
@@ -194,26 +265,6 @@ document.getElementById("uploadExcel").addEventListener("change", e=>{
     e.target.value = ''; 
   };
   reader.readAsArrayBuffer(file);
-});
-
-// Tampilkan data (Read/Realtime Update)
-const tbody = document.getElementById("dataAnggota");
-// Menggunakan KEANGGOTAAN_PATH
-db.ref(KEANGGOTAAN_PATH).on("value", snap=>{
-  tbody.innerHTML="";
-  snap.forEach(child=>{
-    const d=child.val();
-    const tr=document.createElement("tr");
-    tr.innerHTML=`
-      <td>${child.key}</td>
-      <td>${d.keanggotaan}</td>
-      <td>${d.blok}</td>
-      <td>
-        <button class="action-btn edit" onclick="bukaEdit('${child.key}','${d.keanggotaan}','${d.blok}')">Edit</button>
-        <button class="action-btn delete" onclick="bukaHapus('${child.key}')">Hapus</button>
-      </td>`;
-    tbody.appendChild(tr);
-  });
 });
 
 // Popup kontrol & Variabel Global
