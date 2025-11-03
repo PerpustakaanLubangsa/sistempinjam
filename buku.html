@@ -16,7 +16,7 @@ body {
 }
 h2 {text-align:center;}
 .container {
-  max-width: 1200px; /* Lebar diperluas lagi untuk kolom Jenjang */
+  max-width: 1100px; /* Lebar lebih besar untuk mengakomodasi kolom baru */
   margin: auto;
   background: #ffffff;
   padding: 20px;
@@ -32,7 +32,7 @@ input, button {
 }
 input[type="text"] {
     flex-grow: 1;
-    min-width: 80px;
+    min-width: 100px;
 }
 #formTambah {
     display: flex;
@@ -111,18 +111,16 @@ td:nth-child(2) {text-align: left;}
     <input type="text" id="inventaris" placeholder="No. Inventaris" required style="width: 100px;">
     <input type="text" id="judul" placeholder="Judul Buku" required>
     <input type="text" id="pengarang" placeholder="Pengarang" required>
-    <input type="text" id="klasifikasi" placeholder="Klasifikasi" style="width: 100px;">
-    <input type="text" id="kategori" placeholder="Kategori" style="width: 100px;">
-    <input type="text" id="jenjang" placeholder="Jenjang" style="width: 80px;"> <input type="text" id="blok" placeholder="Blok" required style="width: 70px;">
+    <input type="text" id="klasifikasi" placeholder="Klasifikasi" style="width: 100px;"> <input type="text" id="kategori" placeholder="Kategori" style="width: 100px;"> <input type="text" id="blok" placeholder="Blok" required style="width: 70px;">
     <input type="text" id="rak" placeholder="Rak" required style="width: 70px;">
     <button type="submit">Tambah</button>
   </form>
 
   <div style="margin-bottom: 15px;">
-    <input type="text" id="inputPencarian" placeholder="Cari Judul, Pengarang, Jenjang, dll..." style="width: 98%;">
+    <input type="text" id="inputPencarian" placeholder="Cari Judul, Pengarang, Inventaris, Klasifikasi, Kategori, Blok, atau Rak..." style="width: 98%;">
   </div>
   <div>
-    <p><b>Upload Excel (.xlsx)</b> dengan kolom: Inventaris | Judul | Pengarang | Klasifikasi | Kategori | **Jenjang** | Blok | Rak</p>
+    <p><b>Upload Excel (.xlsx)</b> dengan kolom: Inventaris | Judul | Pengarang | **Klasifikasi | Kategori |** Blok | Rak</p>
     <input type="file" id="uploadExcel" accept=".xlsx,.xls">
   </div>
 
@@ -132,9 +130,7 @@ td:nth-child(2) {text-align: left;}
         <th>No. Inventaris</th>
         <th>Judul</th>
         <th>Pengarang</th>
-        <th>Klasifikasi</th>
-        <th>Kategori</th>
-        <th>Jenjang</th> <th>Blok</th>
+        <th>Klasifikasi</th> <th>Kategori</th> <th>Blok</th>
         <th>Rak</th>
         <th style="width:120px;">Aksi</th>
       </tr>
@@ -152,9 +148,7 @@ td:nth-child(2) {text-align: left;}
     <h3>Edit Buku</h3>
     <input type="text" id="editJudul" placeholder="Judul Buku"><br>
     <input type="text" id="editPengarang" placeholder="Pengarang"><br>
-    <input type="text" id="editKlasifikasi" placeholder="Klasifikasi"><br>
-    <input type="text" id="editKategori" placeholder="Kategori"><br>
-    <input type="text" id="editJenjang" placeholder="Jenjang"><br> <input type="text" id="editBlok" placeholder="Blok"><br>
+    <input type="text" id="editKlasifikasi" placeholder="Klasifikasi"><br> <input type="text" id="editKategori" placeholder="Kategori"><br> <input type="text" id="editBlok" placeholder="Blok"><br>
     <input type="text" id="editRak" placeholder="Rak"><br>
     <button id="btnSimpanEdit">Simpan</button>
     <button onclick="tutupPopup('popupEdit')">Batal</button>
@@ -218,8 +212,8 @@ function tampilkanData(snapshot, kataKunci = "") {
     const d = child.val();
     
     // Gabungkan semua data menjadi satu string untuk pencarian
-    // DITAMBAH: jenjang
-    const teksData = `${inv} ${d.judul || ''} ${d.pengarang || ''} ${d.klasifikasi || ''} ${d.kategori || ''} ${d.jenjang || ''} ${d.blok || ''} ${d.rak || ''}`.toLowerCase();
+    // DITAMBAH: klasifikasi dan kategori
+    const teksData = `${inv} ${d.judul || ''} ${d.pengarang || ''} ${d.klasifikasi || ''} ${d.kategori || ''} ${d.blok || ''} ${d.rak || ''}`.toLowerCase();
     
     // Tampilkan hanya jika kata kunci kosong ATAU data mengandung kata kunci
     if (kataKunciLower === "" || teksData.includes(kataKunciLower)) {
@@ -227,9 +221,8 @@ function tampilkanData(snapshot, kataKunci = "") {
       const dataString = encodeURIComponent(JSON.stringify({
           judul: d.judul || '',
           pengarang: d.pengarang || '',
-          klasifikasi: d.klasifikasi || '',
-          kategori: d.kategori || '',
-          jenjang: d.jenjang || '',       // DATA BARU
+          klasifikasi: d.klasifikasi || '', // DATA BARU
+          kategori: d.kategori || '',       // DATA BARU
           blok: d.blok || '',
           rak: d.rak || ''
       }));
@@ -239,9 +232,7 @@ function tampilkanData(snapshot, kataKunci = "") {
         <td>${inv}</td>
         <td style="text-align: left;">${d.judul || ''}</td>
         <td>${d.pengarang || ''}</td>
-        <td>${d.klasifikasi || ''}</td>
-        <td>${d.kategori || ''}</td>
-        <td>${d.jenjang || ''}</td> <td>${d.blok || ''}</td>
+        <td>${d.klasifikasi || ''}</td> <td>${d.kategori || ''}</td> <td>${d.blok || ''}</td>
         <td>${d.rak || ''}</td>
         <td>
           <button class="action-btn edit" onclick="bukaEdit('${inv}','${dataString}')">Edit</button>
@@ -254,7 +245,7 @@ function tampilkanData(snapshot, kataKunci = "") {
 
   if (!hasilDitemukan) {
     const tr = document.createElement("tr");
-    tr.innerHTML = `<td colspan="9">Tidak ada buku ditemukan.</td>`; // colspan diubah dari 8 menjadi 9
+    tr.innerHTML = `<td colspan="8">Tidak ada buku ditemukan.</td>`; // colspan diubah
     tbody.appendChild(tr);
   }
 }
@@ -284,9 +275,8 @@ document.getElementById("formTambah").addEventListener("submit", e=>{
   const inv = document.getElementById("inventaris").value.trim();
   const judul = document.getElementById("judul").value.trim();
   const pengarang = document.getElementById("pengarang").value.trim();
-  const klasifikasi = document.getElementById("klasifikasi").value.trim();
-  const kategori = document.getElementById("kategori").value.trim();
-  const jenjang = document.getElementById("jenjang").value.trim(); // INPUT BARU
+  const klasifikasi = document.getElementById("klasifikasi").value.trim(); // INPUT BARU
+  const kategori = document.getElementById("kategori").value.trim(); // INPUT BARU
   const blok = document.getElementById("blok").value.trim();
   const rak = document.getElementById("rak").value.trim();
 
@@ -295,9 +285,8 @@ document.getElementById("formTambah").addEventListener("submit", e=>{
     db.ref(DATA_PATH_AKTIF + "/"+inv).set({
         judul: judul,
         pengarang: pengarang,
-        klasifikasi: klasifikasi,
-        kategori: kategori,
-        jenjang: jenjang,         // DATA BARU
+        klasifikasi: klasifikasi, // DATA BARU
+        kategori: kategori,       // DATA BARU
         blok: blok,
         rak: rak
     });
@@ -323,9 +312,8 @@ document.getElementById("uploadExcel").addEventListener("change", e=>{
         db.ref(DATA_PATH_AKTIF + "/"+r.Inventaris).set({
             judul: r.Judul,
             pengarang: r.Pengarang,
-            klasifikasi: r.Klasifikasi || '',
-            kategori: r.Kategori || '',       
-            jenjang: r.Jenjang || '',         // DATA BARU (tidak wajib diisi)
+            klasifikasi: r.Klasifikasi || '', // DATA BARU (tidak wajib diisi)
+            kategori: r.Kategori || '',       // DATA BARU (tidak wajib diisi)
             blok: r.Blok,
             rak: r.Rak
         });
@@ -348,9 +336,8 @@ function bukaEdit(inv, dataString){
 
   document.getElementById("editJudul").value = d.judul;
   document.getElementById("editPengarang").value = d.pengarang;
-  document.getElementById("editKlasifikasi").value = d.klasifikasi;
-  document.getElementById("editKategori").value = d.kategori;     
-  document.getElementById("editJenjang").value = d.jenjang;         // DIPERBARUI: Jenjang
+  document.getElementById("editKlasifikasi").value = d.klasifikasi; // DIPERBARUI
+  document.getElementById("editKategori").value = d.kategori;     // DIPERBARUI
   document.getElementById("editBlok").value = d.blok;
   document.getElementById("editRak").value = d.rak;
 
@@ -371,9 +358,8 @@ function bukaHapusSemua(){
 document.getElementById("btnSimpanEdit").addEventListener("click",()=>{
   const judul = document.getElementById("editJudul").value.trim();
   const pengarang = document.getElementById("editPengarang").value.trim();
-  const klasifikasi = document.getElementById("editKlasifikasi").value.trim();
-  const kategori = document.getElementById("editKategori").value.trim();
-  const jenjang = document.getElementById("editJenjang").value.trim(); // INPUT BARU
+  const klasifikasi = document.getElementById("editKlasifikasi").value.trim(); // INPUT BARU
+  const kategori = document.getElementById("editKategori").value.trim(); // INPUT BARU
   const blok = document.getElementById("editBlok").value.trim();
   const rak = document.getElementById("editRak").value.trim();
 
@@ -382,9 +368,8 @@ document.getElementById("btnSimpanEdit").addEventListener("click",()=>{
     db.ref(DATA_PATH_AKTIF + "/"+editINV).update({
         judul: judul,
         pengarang: pengarang,
-        klasifikasi: klasifikasi,
-        kategori: kategori,       
-        jenjang: jenjang,         // DATA BARU
+        klasifikasi: klasifikasi, // DATA BARU
+        kategori: kategori,       // DATA BARU
         blok: blok,
         rak: rak
     });
