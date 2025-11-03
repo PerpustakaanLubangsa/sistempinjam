@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<title>Formulir Pendaftaran Anggota</title>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+<style>
+/* Reset dan Global */
+body {
+  font-family: sans-serif;
+  background: #e0f7fa; 
+  margin: 0;
+  padding: 40px 0; /* Memberi padding atas-bawah agar ada ruang scroll */
+  color: #006064;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start; /* Form tetap di atas */
+  min-height: 100vh;
+  /* MENGHAPUS overflow: hidden; AGAR BISA SCROLL */
+  font-size: 18px; 
+}
+h2 {
+    text-align:center; 
+    color: #006064;
+    margin-bottom: 30px; 
+    font-size: 1.8em; 
+}
+
+/* Container Form: Kotak Sempurna, Aksen Putih */
+.container {
+  width: 500px; 
+  /* MENGHAPUS HEIGHT TETAP */
+  background: #ffffff;
+  padding: 40px; 
+  border-radius: 0;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+  /* MENGHAPUS transform: translateY dan margin negatif */
+  margin-bottom: 40px; /* Tambahkan margin bawah agar tombol tidak mepet */
+}
+
+/* Input Styles */
+label {
+    display: block;
+    margin-bottom: 5px; 
+    font-weight: 600;
+    font-size: 1em; 
+}
+input[type="text"], select { 
+  width: 100%;
+  padding: 14px 12px; 
+  margin-bottom: 20px; 
+  border-radius: 4px;
+  border: 1px solid #cfd8dc; 
+  box-sizing: border-box;
+  background-color: #f7f7f7; 
+  font-size: 1em; 
+  transition: border 0.3s;
+}
+input[type="text"]:focus, select:focus {
+    border-color: #00bcd4;
+    outline: none;
+    background-color: #fff;
+}
+
+/* Button Style */
+button {
+  width: 100%;
+  padding: 16px; 
+  border-radius: 4px;
+  border: none;
+  cursor: pointer;
+  background: #00bcd4;
+  color: #fff;
+  font-size: 1.2em; 
+  font-weight: bold;
+  margin-top: 20px; 
+  transition: background 0.2s;
+}
+button:hover {background: #0097a7;}
+
+/* Message Styles */
+#message {
+    text-align: center;
+    padding: 12px;
+    margin-top: 20px;
+    border-radius: 4px;
+    font-weight: 600;
+    font-size: 1em; 
+    display: none;
+}
+.success {
+    background-color: #e8f5e9;
+    color: #2e7d32;
+}
+.error {
+    background-color: #ffebee;
+    color: #c62828;
+}
+.keterangan-nis {
+    font-size: 0.8em; 
+    color: #0097a7;
+    margin-top: -15px; 
+    margin-bottom: 20px;
+    display: block;
+}
+</style>
+</head>
+<body>
+<div class="container">
+  <h2>Pendaftaran Anggota</h2> 
+
+  <div id="message" class="success"></div>
+
+  <form id="formTambah">
+    <label for="nis">NIS / ID Anggota:</label>
+    <input type="text" id="nis" placeholder="Contoh: 2235" > 
+    
+    <label for="keanggotaan">Nama Lengkap:</label>
+    <input type="text" id="keanggotaan" placeholder="Contoh: Moh. Ali Al-Humaidi" required>
+    
+    <label for="blok">Blok:</label>
+    <input type="text" id="blok" placeholder="Contoh: E 04" required>
+    
+    <label for="jenjang">Jenjang:</label>
+    <select id="jenjang" required>
+        <option value="" disabled selected>Klik untuk Pilih Jenjang</option>
+        <option value="SLTP">SLTP - Mts sederajat</option>
+        <option value="SLTA">SLTA - MA sederajat</option>
+        <option value="PT">PT - Mahasiswa Sederajat</option>
+    </select>
+
+    <button type="submit">Daftar</button>
+  </form>
+</div>
+
+<script>
+// --- KONFIGURASI FIREBASE ---
+const firebaseConfig = {
+  apiKey: "AIzaSyByw2om-sKHqgCWBDJcE7FEtONoUoJbn9M",
+  authDomain: "traying-29bf4.firebaseapp.com",
+  databaseURL: "https://traying-29bf4-default-rtdb.firebaseio.com",
+  projectId: "traying-29bf4",
+  storageBucket: "traying-29bf4.appspot.com",
+  messagingSenderId: "42080663883",
+  appId: "1:42080663883:web:58f28d5d1164204457d030"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
+// **PATH PENYIMPANAN DATA**
+const DATA_PATH_AKTIF = "keanggotaan_v2"; 
+
+const form = document.getElementById("formTambah");
+const messageEl = document.getElementById("message");
+const nisInput = document.getElementById("nis");
+const keanggotaanInput = document.getElementById("keanggotaan");
+const blokInput = document.getElementById("blok");
+
+// ======================================================================
+// FUNGSI HELPER
+// ======================================================================
+
+/**
+ * Menampilkan pesan sukses atau error.
+ */
+function showMessage(msg, type) {
+    messageEl.textContent = msg;
+    messageEl.className = type === 'success' ? 'success' : 'error';
+    messageEl.style.display = 'block';
+    setTimeout(() => {
+        messageEl.style.display = 'none';
+    }, 3000);
+}
+
+/**
+ * Mengubah string menjadi Title Case (Huruf pertama setiap kata kapital).
+ */
+function toTitleCase(str) {
+    if (!str) return '';
+    return str.replace(
+        /\w\S*/g,
+        function(txt) {
+            return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();
+        }
+    );
+}
+
+/**
+ * Menghasilkan ID unik acak pendek.
+ * Format: ID-Timestamp (ms) + 4 karakter acak.
+ */
+function generateUniqueId() {
+    const timestamp = Date.now().toString(16); 
+    const randomPart = Math.random().toString(16).substring(2, 6).toUpperCase(); 
+    return `ID-${timestamp}-${randomPart}`;
+}
+
+// ======================================================================
+// EVENT LISTENER
+// ======================================================================
+
+// Realtime: Otomatis kapitalisasi input Nama Anggota (Title Case)
+keanggotaanInput.addEventListener('input', function() {
+    if (this.selectionStart === this.selectionEnd) {
+        this.value = toTitleCase(this.value);
+    }
+});
+
+// Realtime: Otomatis kapitalisasi input Blok (Uppercase)
+blokInput.addEventListener('input', function() {
+    this.value = this.value.toUpperCase();
+});
+
+
+// Tambah anggota
+form.addEventListener("submit", e => {
+    e.preventDefault();
+    
+    let nis = nisInput.value.trim(); 
+    const keanggotaan = keanggotaanInput.value.trim(); 
+    const blok = blokInput.value.trim(); 
+    const jenjang = document.getElementById("jenjang").value; 
+
+    // Cek jika NIS kosong, isi dengan kode acak
+    const isAutoGenerated = !nis;
+    if (isAutoGenerated) {
+        nis = generateUniqueId();
+    }
+    
+    // Memastikan field Nama, Blok, dan Jenjang wajib terisi
+    if(!keanggotaan || !blok || !jenjang){
+        showMessage("Field Nama, Blok, dan Jenjang wajib diisi!", "error");
+        return;
+    }
+
+    // Lanjutkan penyimpanan data
+    db.ref(DATA_PATH_AKTIF + "/" + nis).set({
+        keanggotaan: keanggotaan,
+        blok: blok,
+        jenjang: jenjang
+    }).then(() => {
+        let msg = `✅ Anggota **${keanggotaan}** berhasil ditambahkan!`;
+        if (isAutoGenerated) {
+            msg += ` (ID: ${nis})`;
+        }
+        showMessage(msg, "success");
+        form.reset(); 
+        nisInput.focus();
+    }).catch(error => {
+        showMessage("Gagal menyimpan data: " + error.message, "error");
+    });
+});
+
+// Fokuskan pada input NIS saat halaman dimuat
+window.onload = () => {
+    nisInput.focus();
+};
+</script>
+</body>
+</html>
