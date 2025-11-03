@@ -2,7 +2,7 @@
 <html lang="id">
 <head>
 <meta charset="UTF-8">
-<title>Manajemen Buku V2 Sederhana</title>
+<title>Manajemen Anggota (NIS)</title>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
@@ -16,7 +16,7 @@ body {
 }
 h2 {text-align:center;}
 .container {
-  max-width: 1200px; /* Lebar diperluas lagi untuk kolom Jenjang */
+  max-width: 800px; /* Lebar disesuaikan */
   margin: auto;
   background: #ffffff;
   padding: 20px;
@@ -106,40 +106,34 @@ td:nth-child(2) {text-align: left;}
 </head>
 <body>
 <div class="container">
-  <h2>Manajemen Buku (Penyimpanan: **buku\_v2**) 📚</h2>
+  <h2>Manajemen Keanggotaan (Penyimpanan: **anggota\_v2**) 🧑‍🎓</h2>
   <form id="formTambah">
-    <input type="text" id="inventaris" placeholder="No. Inventaris" required style="width: 100px;">
-    <input type="text" id="judul" placeholder="Judul Buku" required>
-    <input type="text" id="pengarang" placeholder="Pengarang" required>
-    <input type="text" id="klasifikasi" placeholder="Klasifikasi" style="width: 100px;">
-    <input type="text" id="kategori" placeholder="Kategori" style="width: 100px;">
-    <input type="text" id="jenjang" placeholder="Jenjang" style="width: 80px;"> <input type="text" id="blok" placeholder="Blok" required style="width: 70px;">
-    <input type="text" id="rak" placeholder="Rak" required style="width: 70px;">
+    <input type="text" id="nis" placeholder="NIS/ID Anggota" required style="width: 120px;">
+    <input type="text" id="nama" placeholder="Nama Lengkap" required>
+    <input type="text" id="blok" placeholder="Blok/Kelas" required style="width: 80px;">
+    <input type="text" id="jenjang" placeholder="Jenjang/Tingkat" required style="width: 100px;">
     <button type="submit">Tambah</button>
   </form>
 
   <div style="margin-bottom: 15px;">
-    <input type="text" id="inputPencarian" placeholder="Cari Judul, Pengarang, Jenjang, dll..." style="width: 98%;">
+    <input type="text" id="inputPencarian" placeholder="Cari NIS, Nama, Blok, atau Jenjang..." style="width: 98%;">
   </div>
   <div>
-    <p><b>Upload Excel (.xlsx)</b> dengan kolom: Inventaris | Judul | Pengarang | Klasifikasi | Kategori | **Jenjang** | Blok | Rak</p>
+    <p><b>Upload Excel (.xlsx)</b> dengan kolom: **NIS** | **Nama** | **Blok** | **Jenjang**</p>
     <input type="file" id="uploadExcel" accept=".xlsx,.xls">
   </div>
 
   <table>
     <thead>
       <tr>
-        <th>No. Inventaris</th>
-        <th>Judul</th>
-        <th>Pengarang</th>
-        <th>Klasifikasi</th>
-        <th>Kategori</th>
-        <th>Jenjang</th> <th>Blok</th>
-        <th>Rak</th>
+        <th>NIS/ID Anggota</th>
+        <th>Nama Lengkap</th>
+        <th>Blok/Kelas</th>
+        <th>Jenjang/Tingkat</th>
         <th style="width:120px;">Aksi</th>
       </tr>
     </thead>
-    <tbody id="dataBuku"></tbody>
+    <tbody id="dataAnggota"></tbody>
   </table>
 
   <div style="margin-top:15px; text-align:right;">
@@ -149,13 +143,10 @@ td:nth-child(2) {text-align: left;}
 
 <div class="popup-overlay" id="popupEdit">
   <div class="popup">
-    <h3>Edit Buku</h3>
-    <input type="text" id="editJudul" placeholder="Judul Buku"><br>
-    <input type="text" id="editPengarang" placeholder="Pengarang"><br>
-    <input type="text" id="editKlasifikasi" placeholder="Klasifikasi"><br>
-    <input type="text" id="editKategori" placeholder="Kategori"><br>
-    <input type="text" id="editJenjang" placeholder="Jenjang"><br> <input type="text" id="editBlok" placeholder="Blok"><br>
-    <input type="text" id="editRak" placeholder="Rak"><br>
+    <h3>Edit Anggota</h3>
+    <input type="text" id="editNama" placeholder="Nama Lengkap"><br>
+    <input type="text" id="editBlok" placeholder="Blok/Kelas"><br>
+    <input type="text" id="editJenjang" placeholder="Jenjang/Tingkat"><br>
     <button id="btnSimpanEdit">Simpan</button>
     <button onclick="tutupPopup('popupEdit')">Batal</button>
   </div>
@@ -164,7 +155,7 @@ td:nth-child(2) {text-align: left;}
 <div class="popup-overlay" id="popupHapus">
   <div class="popup">
     <h3>Konfirmasi Hapus</h3>
-    <p>Apakah kamu yakin ingin menghapus buku ini?</p>
+    <p>Apakah kamu yakin ingin menghapus anggota ini?</p>
     <button id="btnHapusConfirm">Hapus</button>
     <button onclick="tutupPopup('popupHapus')">Batal</button>
   </div>
@@ -173,14 +164,14 @@ td:nth-child(2) {text-align: left;}
 <div class="popup-overlay" id="popupHapusSemua">
   <div class="popup">
     <h3>Konfirmasi Hapus Semua</h3>
-    <p>⚠️ Apakah kamu yakin ingin menghapus <b>SEMUA data buku</b>?</p>
+    <p>⚠️ Apakah kamu yakin ingin menghapus <b>SEMUA data anggota</b>?</p>
     <button id="btnHapusSemuaConfirm">Hapus Semua</button>
     <button onclick="tutupPopup('popupHapusSemua')">Batal</button>
   </div>
 </div>
 
 <script>
-// Konfigurasi Firebase Anda (TETAP SAMA)
+// Konfigurasi Firebase (Ganti dengan konfigurasi Anda jika berbeda)
 const firebaseConfig = {
   apiKey: "AIzaSyByw2om-sKHqgCWBDJcE7FEtONoUoJbn9M",
   authDomain: "traying-29bf4.firebaseapp.com",
@@ -193,12 +184,12 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
-// **PATH PENYIMPANAN YANG DIGUNAKAN**
-const DATA_PATH_AKTIF = "buku_v2"; 
+// **PATH PENYIMPANAN DATA ANGGOTA**
+const DATA_PATH_AKTIF = "anggota_v2"; 
 
-// Variabel Global untuk Pencarian
+// Variabel Global
 let lastSnapshot = null;
-const tbody = document.getElementById("dataBuku");
+const tbody = document.getElementById("dataAnggota");
 const inputPencarian = document.getElementById("inputPencarian");
 
 // ======================================================================
@@ -206,7 +197,7 @@ const inputPencarian = document.getElementById("inputPencarian");
 // ======================================================================
 
 /**
- * Memfilter dan menampilkan data buku berdasarkan kata kunci.
+ * Memfilter dan menampilkan data anggota berdasarkan kata kunci.
  */
 function tampilkanData(snapshot, kataKunci = "") {
   tbody.innerHTML = "";
@@ -214,38 +205,30 @@ function tampilkanData(snapshot, kataKunci = "") {
   let hasilDitemukan = false;
 
   snapshot.forEach(child => {
-    const inv = child.key;
+    const nis = child.key; // NIS digunakan sebagai key utama
     const d = child.val();
     
     // Gabungkan semua data menjadi satu string untuk pencarian
-    // DITAMBAH: jenjang
-    const teksData = `${inv} ${d.judul || ''} ${d.pengarang || ''} ${d.klasifikasi || ''} ${d.kategori || ''} ${d.jenjang || ''} ${d.blok || ''} ${d.rak || ''}`.toLowerCase();
+    const teksData = `${nis} ${d.nama || ''} ${d.blok || ''} ${d.jenjang || ''}`.toLowerCase();
     
-    // Tampilkan hanya jika kata kunci kosong ATAU data mengandung kata kunci
+    // Tampilkan hanya jika data mengandung kata kunci
     if (kataKunciLower === "" || teksData.includes(kataKunciLower)) {
       
       const dataString = encodeURIComponent(JSON.stringify({
-          judul: d.judul || '',
-          pengarang: d.pengarang || '',
-          klasifikasi: d.klasifikasi || '',
-          kategori: d.kategori || '',
-          jenjang: d.jenjang || '',       // DATA BARU
+          nama: d.nama || '',
           blok: d.blok || '',
-          rak: d.rak || ''
+          jenjang: d.jenjang || ''
       }));
 
       const tr = document.createElement("tr");
       tr.innerHTML = `
-        <td>${inv}</td>
-        <td style="text-align: left;">${d.judul || ''}</td>
-        <td>${d.pengarang || ''}</td>
-        <td>${d.klasifikasi || ''}</td>
-        <td>${d.kategori || ''}</td>
-        <td>${d.jenjang || ''}</td> <td>${d.blok || ''}</td>
-        <td>${d.rak || ''}</td>
+        <td>${nis}</td>
+        <td style="text-align: left;">${d.nama || ''}</td>
+        <td>${d.blok || ''}</td>
+        <td>${d.jenjang || ''}</td>
         <td>
-          <button class="action-btn edit" onclick="bukaEdit('${inv}','${dataString}')">Edit</button>
-          <button class="action-btn delete" onclick="bukaHapus('${inv}')">Hapus</button>
+          <button class="action-btn edit" onclick="bukaEdit('${nis}','${dataString}')">Edit</button>
+          <button class="action-btn delete" onclick="bukaHapus('${nis}')">Hapus</button>
         </td>`;
       tbody.appendChild(tr);
       hasilDitemukan = true;
@@ -254,7 +237,7 @@ function tampilkanData(snapshot, kataKunci = "") {
 
   if (!hasilDitemukan) {
     const tr = document.createElement("tr");
-    tr.innerHTML = `<td colspan="9">Tidak ada buku ditemukan.</td>`; // colspan diubah dari 8 menjadi 9
+    tr.innerHTML = `<td colspan="5">Tidak ada anggota ditemukan.</td>`;
     tbody.appendChild(tr);
   }
 }
@@ -269,41 +252,32 @@ db.ref(DATA_PATH_AKTIF).on("value", snap => {
 // Event listener untuk input pencarian (FILTER DATA LOKAL)
 inputPencarian.addEventListener("keyup", () => {
   if (lastSnapshot) {
-    // Panggil ulang fungsi tampilan dengan snapshot yang tersimpan
     tampilkanData(lastSnapshot, inputPencarian.value);
   }
 });
 
 // ======================================================================
-// FUNGSI CRUD LAINNYA
+// FUNGSI CRUD
 // ======================================================================
 
-// Tambah buku
+// Tambah anggota
 document.getElementById("formTambah").addEventListener("submit", e=>{
   e.preventDefault();
-  const inv = document.getElementById("inventaris").value.trim();
-  const judul = document.getElementById("judul").value.trim();
-  const pengarang = document.getElementById("pengarang").value.trim();
-  const klasifikasi = document.getElementById("klasifikasi").value.trim();
-  const kategori = document.getElementById("kategori").value.trim();
-  const jenjang = document.getElementById("jenjang").value.trim(); // INPUT BARU
+  const nis = document.getElementById("nis").value.trim();
+  const nama = document.getElementById("nama").value.trim();
   const blok = document.getElementById("blok").value.trim();
-  const rak = document.getElementById("rak").value.trim();
+  const jenjang = document.getElementById("jenjang").value.trim();
 
-  // Hanya memastikan field yang *wajib* terisi (inv, judul, pengarang, blok, rak)
-  if(inv && judul && pengarang && blok && rak){ 
-    db.ref(DATA_PATH_AKTIF + "/"+inv).set({
-        judul: judul,
-        pengarang: pengarang,
-        klasifikasi: klasifikasi,
-        kategori: kategori,
-        jenjang: jenjang,         // DATA BARU
+  // Memastikan semua field wajib terisi
+  if(nis && nama && blok && jenjang){ 
+    db.ref(DATA_PATH_AKTIF + "/"+nis).set({
+        nama: nama,
         blok: blok,
-        rak: rak
+        jenjang: jenjang
     });
     e.target.reset();
   } else {
-      alert("No. Inventaris, Judul, Pengarang, Blok, dan Rak wajib diisi!");
+      alert("Semua field wajib diisi!");
   }
 });
 
@@ -318,16 +292,12 @@ document.getElementById("uploadExcel").addEventListener("change", e=>{
     const sheet = workbook.Sheets[workbook.SheetNames[0]];
     const rows = XLSX.utils.sheet_to_json(sheet);
     rows.forEach(r=>{
-      // Memastikan kolom wajib Excel ada
-      if(r.Inventaris && r.Judul && r.Pengarang && r.Blok && r.Rak){
-        db.ref(DATA_PATH_AKTIF + "/"+r.Inventaris).set({
-            judul: r.Judul,
-            pengarang: r.Pengarang,
-            klasifikasi: r.Klasifikasi || '',
-            kategori: r.Kategori || '',       
-            jenjang: r.Jenjang || '',         // DATA BARU (tidak wajib diisi)
+      // Memastikan semua kolom Excel ada
+      if(r.NIS && r.Nama && r.Blok && r.Jenjang){
+        db.ref(DATA_PATH_AKTIF + "/"+r.NIS).set({
+            nama: r.Nama,
             blok: r.Blok,
-            rak: r.Rak
+            jenjang: r.Jenjang
         });
       }
     });
@@ -337,28 +307,24 @@ document.getElementById("uploadExcel").addEventListener("change", e=>{
   reader.readAsArrayBuffer(file);
 });
 
-// Popup kontrol (TETAP SAMA)
+// Popup kontrol
 function tutupPopup(id){document.getElementById(id).style.display="none";}
-let editINV=null;
-let hapusINV=null;
+let editNIS=null;
+let hapusNIS=null;
 
-function bukaEdit(inv, dataString){
-  editINV=inv;
+function bukaEdit(nis, dataString){
+  editNIS=nis;
   const d = JSON.parse(decodeURIComponent(dataString));
 
-  document.getElementById("editJudul").value = d.judul;
-  document.getElementById("editPengarang").value = d.pengarang;
-  document.getElementById("editKlasifikasi").value = d.klasifikasi;
-  document.getElementById("editKategori").value = d.kategori;     
-  document.getElementById("editJenjang").value = d.jenjang;         // DIPERBARUI: Jenjang
+  document.getElementById("editNama").value = d.nama;
   document.getElementById("editBlok").value = d.blok;
-  document.getElementById("editRak").value = d.rak;
+  document.getElementById("editJenjang").value = d.jenjang;
 
   document.getElementById("popupEdit").style.display="flex";
-  document.getElementById("editJudul").focus();
+  document.getElementById("editNama").focus();
 }
-function bukaHapus(inv){
-  hapusINV=inv;
+function bukaHapus(nis){
+  hapusNIS=nis;
   document.getElementById("popupHapus").style.display="flex";
   document.getElementById("btnHapusConfirm").focus();
 }
@@ -369,45 +335,37 @@ function bukaHapusSemua(){
 
 // Edit simpan
 document.getElementById("btnSimpanEdit").addEventListener("click",()=>{
-  const judul = document.getElementById("editJudul").value.trim();
-  const pengarang = document.getElementById("editPengarang").value.trim();
-  const klasifikasi = document.getElementById("editKlasifikasi").value.trim();
-  const kategori = document.getElementById("editKategori").value.trim();
-  const jenjang = document.getElementById("editJenjang").value.trim(); // INPUT BARU
+  const nama = document.getElementById("editNama").value.trim();
   const blok = document.getElementById("editBlok").value.trim();
-  const rak = document.getElementById("editRak").value.trim();
+  const jenjang = document.getElementById("editJenjang").value.trim();
 
-  // Memastikan field wajib terisi
-  if(editINV && judul && pengarang && blok && rak){
-    db.ref(DATA_PATH_AKTIF + "/"+editINV).update({
-        judul: judul,
-        pengarang: pengarang,
-        klasifikasi: klasifikasi,
-        kategori: kategori,       
-        jenjang: jenjang,         // DATA BARU
+  // Memastikan semua field terisi
+  if(editNIS && nama && blok && jenjang){
+    db.ref(DATA_PATH_AKTIF + "/"+editNIS).update({
+        nama: nama,
         blok: blok,
-        rak: rak
+        jenjang: jenjang
     });
     tutupPopup("popupEdit");
   } else {
-      alert("Judul, Pengarang, Blok, dan Rak wajib diisi!");
+      alert("Semua field wajib diisi!");
   }
 });
 
-// Hapus satu (TETAP SAMA)
+// Hapus satu
 document.getElementById("btnHapusConfirm").addEventListener("click",()=>{
-  if(hapusINV){
-    db.ref(DATA_PATH_AKTIF + "/"+hapusINV).remove();
+  if(hapusNIS){
+    db.ref(DATA_PATH_AKTIF + "/"+hapusNIS).remove();
     tutupPopup("popupHapus");
   }
 });
 
-// Hapus semua (TETAP SAMA)
+// Hapus semua
 document.getElementById("btnHapusSemuaConfirm").addEventListener("click",()=>{
   db.ref(DATA_PATH_AKTIF).remove().then(()=>tutupPopup("popupHapusSemua"));
 });
 
-// Akses Enter di popup (TETAP SAMA)
+// Akses Enter di popup
 document.addEventListener("keydown", e=>{
   if(e.key==="Enter"){
     if(document.getElementById("popupEdit").style.display==="flex"){
