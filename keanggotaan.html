@@ -16,7 +16,7 @@ body {
 }
 h2 {text-align:center;}
 .container {
-  max-width: 800px; /* Lebar disesuaikan */
+  max-width: 900px; /* Lebar disesuaikan */
   margin: auto;
   background: #ffffff;
   padding: 20px;
@@ -106,12 +106,12 @@ td:nth-child(2) {text-align: left;}
 </head>
 <body>
 <div class="container">
-  <h2>Manajemen Keanggotaan (Penyimpanan: **anggota\_v2**) 🧑‍🎓</h2>
+  <h2>Manajemen Keanggotaan (Penyimpanan: **keanggotaan\_v2**) 🧑‍🎓</h2>
   <form id="formTambah">
     <input type="text" id="nis" placeholder="NIS/ID Anggota" required style="width: 120px;">
-    <input type="text" id="nama" placeholder="Nama Lengkap" required>
-    <input type="text" id="blok" placeholder="Blok/Kelas" required style="width: 80px;">
-    <input type="text" id="jenjang" placeholder="Jenjang/Tingkat" required style="width: 100px;">
+    <input type="text" id="keanggotaan" placeholder="Nama Lengkap" required>
+    <input type="text" id="blok" placeholder="Blok" required style="width: 80px;">
+    <input type="text" id="jenjang" placeholder="Jenjang" required style="width: 100px;">
     <button type="submit">Tambah</button>
   </form>
 
@@ -119,7 +119,7 @@ td:nth-child(2) {text-align: left;}
     <input type="text" id="inputPencarian" placeholder="Cari NIS, Nama, Blok, atau Jenjang..." style="width: 98%;">
   </div>
   <div>
-    <p><b>Upload Excel (.xlsx)</b> dengan kolom: **NIS** | **Nama** | **Blok** | **Jenjang**</p>
+    <p><b>Upload Excel (.xlsx)</b> dengan kolom: **NIS** | **Keanggotaan (Nama)** | **Blok** | **Jenjang**</p>
     <input type="file" id="uploadExcel" accept=".xlsx,.xls">
   </div>
 
@@ -127,9 +127,9 @@ td:nth-child(2) {text-align: left;}
     <thead>
       <tr>
         <th>NIS/ID Anggota</th>
-        <th>Nama Lengkap</th>
-        <th>Blok/Kelas</th>
-        <th>Jenjang/Tingkat</th>
+        <th>Nama Anggota</th>
+        <th>Blok</th>
+        <th>Jenjang</th>
         <th style="width:120px;">Aksi</th>
       </tr>
     </thead>
@@ -144,9 +144,9 @@ td:nth-child(2) {text-align: left;}
 <div class="popup-overlay" id="popupEdit">
   <div class="popup">
     <h3>Edit Anggota</h3>
-    <input type="text" id="editNama" placeholder="Nama Lengkap"><br>
-    <input type="text" id="editBlok" placeholder="Blok/Kelas"><br>
-    <input type="text" id="editJenjang" placeholder="Jenjang/Tingkat"><br>
+    <input type="text" id="editKeanggotaan" placeholder="Nama Anggota"><br>
+    <input type="text" id="editBlok" placeholder="Blok"><br>
+    <input type="text" id="editJenjang" placeholder="Jenjang"><br>
     <button id="btnSimpanEdit">Simpan</button>
     <button onclick="tutupPopup('popupEdit')">Batal</button>
   </div>
@@ -171,7 +171,7 @@ td:nth-child(2) {text-align: left;}
 </div>
 
 <script>
-// Konfigurasi Firebase (Ganti dengan konfigurasi Anda jika berbeda)
+// Konfigurasi Firebase (TIDAK BERUBAH)
 const firebaseConfig = {
   apiKey: "AIzaSyByw2om-sKHqgCWBDJcE7FEtONoUoJbn9M",
   authDomain: "traying-29bf4.firebaseapp.com",
@@ -184,7 +184,7 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
-// **PATH PENYIMPANAN DATA ANGGOTA**
+// **PATH PENYIMPANAN DATA ANGGOTA (Sesuai Permintaan)**
 const DATA_PATH_AKTIF = "keanggotaan_v2"; 
 
 // Variabel Global
@@ -196,26 +196,22 @@ const inputPencarian = document.getElementById("inputPencarian");
 // FUNGSI PENCARIAN & TAMPILAN
 // ======================================================================
 
-/**
- * Memfilter dan menampilkan data anggota berdasarkan kata kunci.
- */
 function tampilkanData(snapshot, kataKunci = "") {
   tbody.innerHTML = "";
   const kataKunciLower = kataKunci.toLowerCase().trim();
   let hasilDitemukan = false;
 
   snapshot.forEach(child => {
-    const nis = child.key; // NIS digunakan sebagai key utama
+    const nis = child.key; 
     const d = child.val();
     
-    // Gabungkan semua data menjadi satu string untuk pencarian
-    const teksData = `${nis} ${d.nama || ''} ${d.blok || ''} ${d.jenjang || ''}`.toLowerCase();
+    // Pencarian pada NIS, keanggotaan, blok, dan jenjang
+    const teksData = `${nis} ${d.keanggotaan || ''} ${d.blok || ''} ${d.jenjang || ''}`.toLowerCase();
     
-    // Tampilkan hanya jika data mengandung kata kunci
     if (kataKunciLower === "" || teksData.includes(kataKunciLower)) {
       
       const dataString = encodeURIComponent(JSON.stringify({
-          nama: d.nama || '',
+          keanggotaan: d.keanggotaan || '',
           blok: d.blok || '',
           jenjang: d.jenjang || ''
       }));
@@ -223,7 +219,7 @@ function tampilkanData(snapshot, kataKunci = "") {
       const tr = document.createElement("tr");
       tr.innerHTML = `
         <td>${nis}</td>
-        <td style="text-align: left;">${d.nama || ''}</td>
+        <td style="text-align: left;">${d.keanggotaan || ''}</td>
         <td>${d.blok || ''}</td>
         <td>${d.jenjang || ''}</td>
         <td>
@@ -242,14 +238,13 @@ function tampilkanData(snapshot, kataKunci = "") {
   }
 }
 
-// Tampilkan data (Read/Realtime Update) - MENGAMBIL DATA DARI FIREBASE
+// Tampilkan data (Read/Realtime Update)
 db.ref(DATA_PATH_AKTIF).on("value", snap => {
-  lastSnapshot = snap; // Simpan snapshot terbaru
-  // Panggil fungsi tampilan dengan kata kunci saat ini
+  lastSnapshot = snap;
   tampilkanData(lastSnapshot, inputPencarian.value);
 });
 
-// Event listener untuk input pencarian (FILTER DATA LOKAL)
+// Event listener untuk input pencarian
 inputPencarian.addEventListener("keyup", () => {
   if (lastSnapshot) {
     tampilkanData(lastSnapshot, inputPencarian.value);
@@ -264,16 +259,16 @@ inputPencarian.addEventListener("keyup", () => {
 document.getElementById("formTambah").addEventListener("submit", e=>{
   e.preventDefault();
   const nis = document.getElementById("nis").value.trim();
-  const nama = document.getElementById("nama").value.trim();
+  const keanggotaan = document.getElementById("keanggotaan").value.trim();
   const blok = document.getElementById("blok").value.trim();
-  const jenjang = document.getElementById("jenjang").value.trim();
+  const jenjang = document.getElementById("jenjang").value.trim(); // DITAMBAHKAN
 
   // Memastikan semua field wajib terisi
-  if(nis && nama && blok && jenjang){ 
+  if(nis && keanggotaan && blok && jenjang){ 
     db.ref(DATA_PATH_AKTIF + "/"+nis).set({
-        nama: nama,
+        keanggotaan: keanggotaan,
         blok: blok,
-        jenjang: jenjang
+        jenjang: jenjang // DISIMPAN
     });
     e.target.reset();
   } else {
@@ -292,12 +287,12 @@ document.getElementById("uploadExcel").addEventListener("change", e=>{
     const sheet = workbook.Sheets[workbook.SheetNames[0]];
     const rows = XLSX.utils.sheet_to_json(sheet);
     rows.forEach(r=>{
-      // Memastikan semua kolom Excel ada
-      if(r.NIS && r.Nama && r.Blok && r.Jenjang){
+      // Header Excel harus: NIS, Keanggotaan, Blok, Jenjang
+      if(r.NIS && r.Keanggotaan && r.Blok && r.Jenjang){ 
         db.ref(DATA_PATH_AKTIF + "/"+r.NIS).set({
-            nama: r.Nama,
+            keanggotaan: r.Keanggotaan,
             blok: r.Blok,
-            jenjang: r.Jenjang
+            jenjang: r.Jenjang // DISIMPAN
         });
       }
     });
@@ -307,7 +302,7 @@ document.getElementById("uploadExcel").addEventListener("change", e=>{
   reader.readAsArrayBuffer(file);
 });
 
-// Popup kontrol
+// Popup kontrol 
 function tutupPopup(id){document.getElementById(id).style.display="none";}
 let editNIS=null;
 let hapusNIS=null;
@@ -316,12 +311,12 @@ function bukaEdit(nis, dataString){
   editNIS=nis;
   const d = JSON.parse(decodeURIComponent(dataString));
 
-  document.getElementById("editNama").value = d.nama;
+  document.getElementById("editKeanggotaan").value = d.keanggotaan;
   document.getElementById("editBlok").value = d.blok;
-  document.getElementById("editJenjang").value = d.jenjang;
+  document.getElementById("editJenjang").value = d.jenjang; // DITAMBAHKAN
 
   document.getElementById("popupEdit").style.display="flex";
-  document.getElementById("editNama").focus();
+  document.getElementById("editKeanggotaan").focus();
 }
 function bukaHapus(nis){
   hapusNIS=nis;
@@ -335,16 +330,16 @@ function bukaHapusSemua(){
 
 // Edit simpan
 document.getElementById("btnSimpanEdit").addEventListener("click",()=>{
-  const nama = document.getElementById("editNama").value.trim();
+  const keanggotaan = document.getElementById("editKeanggotaan").value.trim();
   const blok = document.getElementById("editBlok").value.trim();
-  const jenjang = document.getElementById("editJenjang").value.trim();
+  const jenjang = document.getElementById("editJenjang").value.trim(); // DITAMBAHKAN
 
   // Memastikan semua field terisi
-  if(editNIS && nama && blok && jenjang){
+  if(editNIS && keanggotaan && blok && jenjang){
     db.ref(DATA_PATH_AKTIF + "/"+editNIS).update({
-        nama: nama,
+        keanggotaan: keanggotaan,
         blok: blok,
-        jenjang: jenjang
+        jenjang: jenjang // DIUPDATE
     });
     tutupPopup("popupEdit");
   } else {
