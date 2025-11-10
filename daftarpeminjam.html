@@ -28,11 +28,11 @@
 @keyframes blink-flash {
     0%, 100% { 
         background-color: var(--danger-red); 
-        box-shadow: 0 0 15px rgba(231, 76, 60, 0.8); /* Flash lebih terang */
+        box-shadow: 0 0 15px rgba(231, 76, 60, 0.8);
         transform: scale(1);
     }
     50% { 
-        background-color: #c0392b; /* Warna sedikit lebih gelap */
+        background-color: #c0392b;
         box-shadow: 0 0 5px rgba(231, 76, 60, 0.3); 
         transform: scale(0.99);
     }
@@ -44,7 +44,7 @@ body {
     margin: 0; 
     padding: 20px 15px; 
     color: var(--text-dark); 
-    position: relative; /* Penting untuk positioning hitungan total */
+    position: relative;
 }
 
 /* --- GAYA BARU UNTUK TOTAL PEMINJAM --- */
@@ -68,7 +68,7 @@ body {
 /* Untuk layar yang lebih kecil, geser sedikit */
 @media (max-width: 600px) {
     #totalPeminjam {
-        top: 65px; /* Geser ke bawah agar tidak terlalu dekat dengan search */
+        top: 65px;
         right: 10px;
         padding: 6px 10px;
         font-size: 0.9em;
@@ -405,10 +405,79 @@ body {
 #btnSimpanTanggal:hover {
     background-color: #27ae60;
 }
+
+
+/* --- TOAST NOTIFICATION STYLES --- */
+@keyframes slide-in {
+    from {
+        opacity: 0;
+        transform: translate(-50%, 20px) scale(0.9);
+    }
+    to {
+        opacity: 1;
+        transform: translate(-50%, 0) scale(1);
+    }
+}
+@keyframes slide-out {
+    from {
+        opacity: 1;
+        transform: translate(-50%, 0) scale(1);
+    }
+    to {
+        opacity: 0;
+        transform: translate(-50%, -20px) scale(0.9);
+    }
+}
+
+#toastNotification {
+    position: fixed;
+    bottom: 50px; /* Posisi di bawah tengah */
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: var(--success-green); 
+    color: #fff;
+    padding: 12px 20px;
+    border-radius: 10px;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+    font-weight: 600;
+    z-index: 2000; 
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 250px;
+    text-align: center;
+}
+
+#toastNotification.toast-error {
+    background-color: var(--danger-red);
+}
+
+.toast-icon {
+    font-size: 1.2em;
+}
+
+.toast-hidden {
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s;
+}
+
+.toast-show {
+    animation: slide-in 0.3s forwards;
+}
+
+.toast-hide {
+    animation: slide-out 0.3s forwards;
+}
+/* --- AKHIR TOAST STYLES --- */
 </style>
 </head>
 <body>
 
+<div id="toastNotification" class="toast-hidden">
+    <i class="fas fa-check-circle toast-icon"></i>
+    <span id="toastMessage"></span>
+</div>
 <div id="customModal">
     <div class="modal-content">
         <i id="modalIcon" class="modal-icon fas fa-question-circle"></i>
@@ -487,8 +556,48 @@ const dateValueInput = document.getElementById('dateValueInput');
 const btnSimpanTanggal = document.getElementById('btnSimpanTanggal');
 const btnBatalTanggal = document.getElementById('btnBatalTanggal');
 
+// --- TOAST NOTIFICATION ELEMENTS ---
+const toastNotification = document.getElementById('toastNotification');
+const toastMessage = document.getElementById('toastMessage');
+
 
 // --- HELPER FUNCTIONS ---
+
+// --- FUNGSI BARU: RESET FOKUS PENCARIAN & BLOK SEMUA TEKS ---
+function resetSearchFocus() {
+    // 1. Berikan fokus ke input
+    searchInput.focus(); 
+    // 2. Blok (select all) semua teks di input
+    searchInput.select(); 
+}
+
+// --- FUNGSI TOAST NOTIFICATION ---
+function showToast(message, isError = false, duration = 3000) {
+    toastMessage.textContent = message.replace(/<br>/g, ' '); 
+    
+    // Set warna dan ikon
+    const icon = toastNotification.querySelector('.toast-icon');
+    icon.className = 'toast-icon fas';
+    
+    if (isError) {
+        toastNotification.classList.add('toast-error');
+        icon.classList.add('fa-exclamation-circle');
+    } else {
+        toastNotification.classList.remove('toast-error');
+        icon.classList.add('fa-check-circle');
+    }
+    
+    // Tampilkan
+    toastNotification.classList.remove('toast-hidden', 'toast-hide');
+    toastNotification.classList.add('toast-show');
+
+    // Sembunyikan setelah durasi
+    setTimeout(() => {
+        toastNotification.classList.remove('toast-show');
+        toastNotification.classList.add('toast-hide');
+        resetSearchFocus(); // PANGGIL RESET FOKUS DI SINI
+    }, duration);
+}
 
 function showStatus(message = '', icon = '', isVisible = true) {
     if (isVisible) {
@@ -580,6 +689,7 @@ function showCustomModal(message, onConfirm, isDanger = false, isAlert = false) 
 
 function closeModal() {
     customModal.classList.remove('show');
+    resetSearchFocus(); // PANGGIL RESET FOKUS DI SINI
 }
 
 function handleConfirmClick() {
@@ -587,8 +697,14 @@ function handleConfirmClick() {
     currentConfirmAction(); 
 }
 
-function customAlert(message) {
-    showCustomModal(message, () => {}, false, true); 
+// FUNGSI customAlert DIMODIFIKASI UNTUK MENGGUNAKAN showToast UNTUK SUKSES
+function customAlert(message, isSuccess = false) {
+    if (isSuccess) {
+        showToast(message, false); 
+        return;
+    }
+    // Untuk pesan non-sukses (error, info penting, dsb.) tetap gunakan Modal
+    showCustomModal(message, () => {}, message.includes("🚫 Error"), true); 
 }
 
 
@@ -596,6 +712,7 @@ function customAlert(message) {
 
 function tutupPopupEditTanggal() {
     popupEditTanggal.classList.remove('show');
+    resetSearchFocus(); // PANGGIL RESET FOKUS DI SINI
 }
 
 function updateTanggal(key, dateKey, newDate, newKembali = null) {
@@ -618,7 +735,7 @@ function updateTanggal(key, dateKey, newDate, newKembali = null) {
              successMsg = `Tanggal Kembali berhasil diubah menjadi **${new Date(newDate).toLocaleDateString('id-ID')}**`;
         }
 
-        customAlert(`🎉 ${successMsg}`);
+        customAlert(`🎉 ${successMsg}`, true); 
     }).catch(error => {
         currentEditKey = null; 
         customAlert(`🚫 Gagal mengubah tanggal: ${error.message}`);
@@ -803,7 +920,7 @@ function renderCards(data) {
 
 function kembalikan(key) {
     db.ref(PEMINJAMAN_PATH + "/" + key).remove()
-    .then(() => customAlert("✅ Pengembalian buku berhasil diproses!"))
+    .then(() => customAlert("✅ Pengembalian buku berhasil diproses!", true)) 
     .catch(error => customAlert(`🚫 Error menghapus data: ${error.message}`));
 }
 
@@ -847,7 +964,7 @@ function handlePerpanjang(key) {
         db.ref(PEMINJAMAN_PATH + "/"+key).update({
             tanggalKembali: newTglKembali
         })
-        .then(() => customAlert(`🎉 Peminjaman berhasil diperpanjang!\nTanggal kembali baru: **${newTglKembali}**`))
+        .then(() => customAlert(`🎉 Peminjaman berhasil diperpanjang!\nTanggal kembali baru: **${newTglKembali}**`, true)) 
         .catch(error => customAlert(`🚫 Error memperpanjang data: ${error.message}`));
     }, dendaInfo.terlambat); 
 }
