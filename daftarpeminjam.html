@@ -539,7 +539,7 @@ const DENDA_PER_HARI = 1000;
 // --- STATE GLOBAL ---
 let allPeminjamanData = {};
 let currentConfirmAction = () => {}; 
-let keydownListener; 
+let keydownListener; // Variabel global untuk listener keydown
 let currentEditKey = null; 
 
 // --- Elemen Modal Konfirmasi/Alert ---
@@ -685,11 +685,36 @@ function showCustomModal(message, onConfirm, isDanger = false, isAlert = false) 
     cancelBtn.onclick = closeModal;
 
     customModal.classList.add('show');
+    
+    // --- PENAMBAHAN LOGIKA KEYDOWN UNTUK ENTER/ESC ---
+    if (keydownListener) {
+        document.removeEventListener('keydown', keydownListener);
+    }
+    keydownListener = (e) => {
+        if (customModal.classList.contains('show')) {
+            if (e.key === 'Enter') {
+                e.preventDefault(); 
+                handleConfirmClick();
+            } else if (e.key === 'Escape' && !isAlert) {
+                e.preventDefault(); 
+                closeModal();
+            }
+        }
+    };
+    document.addEventListener('keydown', keydownListener);
+    // ---------------------------------------------------
 }
 
 function closeModal() {
     customModal.classList.remove('show');
     resetSearchFocus(); // PANGGIL RESET FOKUS DI SINI
+    
+    // --- PENGHAPUSAN EVENT LISTENER KEYDOWN ---
+    if (keydownListener) {
+        document.removeEventListener('keydown', keydownListener);
+        keydownListener = null;
+    }
+    // ------------------------------------------
 }
 
 function handleConfirmClick() {
