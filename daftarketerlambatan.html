@@ -144,6 +144,17 @@ h2 {
 .kolom-denda { font-weight: 700; color: var(--danger-red); }
 .kolom-hari { font-weight: 600; color: #d35400; text-align: center;} 
 
+/* Gaya baris Total */
+.total-row {
+    font-weight: 700;
+    background-color: #ecf0f1;
+    border-top: 2px solid var(--text-dark);
+}
+.total-denda-cell {
+    font-size: 1.1em;
+    color: var(--danger-red);
+}
+
 /* Responsif */
 @media (max-width: 768px) {
     body { padding: 5px; }
@@ -188,6 +199,8 @@ h2 {
         </thead>
         <tbody id="terlambatTableBody">
             </tbody>
+        <tfoot id="terlambatTableFoot">
+            </tfoot>
     </table>
 </div>
 
@@ -210,6 +223,7 @@ const DENDA_PER_HARI = 1000;
 
 // --- ELEMEN UTAMA ---
 const tableBody = document.getElementById("terlambatTableBody");
+const tableFoot = document.getElementById("terlambatTableFoot"); // Tambahkan
 const statusMessage = document.getElementById('statusMessage');
 const totalTerlambatDisplay = document.getElementById('totalTerlambat');
 const copyBtn = document.getElementById('copyToExcelBtn');
@@ -242,6 +256,7 @@ function hitungDenda(tanggalKembaliStr) {
     
     let hariTerlambat = 0;
     if (selisihMs > 0) {
+        // Hanya hitung hari terlambat jika selisih > 0
         hariTerlambat = Math.floor(selisihMs / (1000 * 60 * 60 * 24)); 
     }
     
@@ -267,8 +282,10 @@ function hitungDenda(tanggalKembaliStr) {
 
 function renderTerlambatTable(data) {
     tableBody.innerHTML = "";
+    tableFoot.innerHTML = ""; // Bersihkan footer
     let no = 1;
     let totalTerlambatCount = 0;
+    let grandTotalDenda = 0; // Variabel baru untuk Grand Total Denda
 
     for (const key in data) {
         const d = data[key];
@@ -276,6 +293,8 @@ function renderTerlambatTable(data) {
         
         if (dendaInfo.terlambat) {
             totalTerlambatCount++;
+            grandTotalDenda += dendaInfo.denda; // Tambahkan denda ke grand total
+            
             const row = tableBody.insertRow();
             row.className = "terlambat-row";
             
@@ -313,6 +332,26 @@ function renderTerlambatTable(data) {
     if (totalTerlambatCount === 0) {
         showStatus(`<i class="fas fa-thumbs-up" style="color:var(--success-green);"></i> **SEMUA AMAN!** Tidak ada peminjaman yang terlambat saat ini.`);
     } else {
+        // --- Tambahkan Baris Total Denda ---
+        const totalRow = tableFoot.insertRow();
+        totalRow.className = "total-row";
+        
+        // Sel 1-5: Gabungkan untuk label "GRAND TOTAL"
+        const labelCell = totalRow.insertCell();
+        labelCell.colSpan = 5; 
+        labelCell.textContent = "GRAND TOTAL DENDA KESELURUHAN:";
+        labelCell.style.textAlign = 'right';
+        
+        // Sel 6: Biarkan kosong (Kolom Hari)
+        totalRow.insertCell().textContent = "";
+        
+        // Sel 7: Total Denda Keseluruhan
+        const grandTotalCell = totalRow.insertCell();
+        grandTotalCell.className = "kolom-denda total-denda-cell";
+        grandTotalCell.textContent = formatRupiah(grandTotalDenda);
+        
+        // --- Selesai Tambah Baris Total ---
+        
         showStatus("", false);
         copyBtn.disabled = false;
     }
@@ -333,7 +372,12 @@ function copyTableToClipboard() {
     // 2. Kloning tabel, tetapi sebelum dikloning, modifikasi data denda
     const clonedTable = table.cloneNode(true);
     
-    // Lakukan pembersihan format pada kloningan tabel
+    // Hapus baris total di tfoot dari kloningan agar tidak menyalin label "GRAND TOTAL"
+    // yang dapat mengganggu format Excel, tapi tetap menyalin nilainya.
+    const tfootClone = clonedTable.querySelector('tfoot');
+    if(tfootClone) tfootClone.remove();
+
+    // Lakukan pembersihan format pada kloningan tabel (tbody)
     clonedTable.querySelectorAll('tbody tr').forEach(row => {
         const dendaCell = row.cells[6]; // Kolom Total Denda adalah index 6
         const hariCell = row.cells[5];   // Kolom Hari adalah index 5
@@ -345,6 +389,27 @@ function copyTableToClipboard() {
         // Bersihkan Hari (agar hanya angka)
         hariCell.textContent = parseInt(hariCell.textContent) || 0;
     });
+
+    // Tambahkan baris Grand Total ke kloningan sebagai baris terakhir di tbody
+    const grandTotalRow = tableFoot.querySelector('.total-row');
+    if (grandTotalRow) {
+        const newRow = clonedTable.querySelector('tbody').insertRow();
+        
+        // Sel kosong untuk 5 kolom pertama
+        for (let i = 0; i < 5; i++) {
+             newRow.insertCell().textContent = "";
+        }
+        
+        // Sel label Total Hari (Kosong)
+        newRow.insertCell().textContent = "TOTAL DENDA:"; // Label sedikit dimodifikasi
+        
+        // Sel Total Denda (Bersihkan dari format Rupiah)
+        const dendaCell = newRow.insertCell();
+        let dendaText = grandTotalRow.cells[6].textContent.trim();
+        dendaCell.textContent = dendaText.replace('Rp', '').replace(/\./g, '').replace(/,/g, '');
+        dendaCell.style.fontWeight = 'bold'; // Tambah style untuk Excel
+    }
+
 
     // 3. Masukkan tabel kloning yang sudah bersih ke DIV temporer
     tempDiv.appendChild(clonedTable);
