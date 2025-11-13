@@ -945,7 +945,16 @@ function renderCards(data) {
 
 function kembalikan(key) {
     db.ref(PEMINJAMAN_PATH + "/" + key).remove()
-    .then(() => customAlert("✅ Pengembalian buku berhasil diproses!", true)) 
+    .then(() => {
+        // --- 1. Kosongkan nilai input ---
+        searchInput.value = ''; 
+        
+        // --- 2. Panggil filterTable untuk memicu pencarian ulang dengan nilai kosong (MEMPERBAIKI MASALAH) ---
+        filterTable(); 
+        
+        // 3. Tampilkan notifikasi
+        customAlert("✅ Pengembalian buku berhasil diproses!", true);
+    }) 
     .catch(error => customAlert(`🚫 Error menghapus data: ${error.message}`));
 }
 
