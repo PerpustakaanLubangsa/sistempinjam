@@ -527,6 +527,16 @@ td:first-child { font-weight: 700; color: var(--primary-color); }
     th, td { padding: 12px; font-size: 0.85em; }
     .action-buttons-cell { flex-direction: column; gap: 5px; }
     .action-btn { width: 100%; text-align: center; }
+
+    /* MODIFIKASI UNTUK FULL SCREEN POPUP PROFIL */
+    .modal-content {
+        width: 100%; /* Lebar penuh */
+        max-width: 100%; /* Hilangkan batasan max-width */
+        height: 100%; /* Tinggi penuh */
+        max-height: 100%; /* Hilangkan batasan max-height */
+        border-radius: 0; /* Hilangkan border-radius */
+        margin: 0; /* Pastikan tidak ada margin */
+    }
 }
 </style>
 </head>
@@ -537,7 +547,7 @@ td:first-child { font-weight: 700; color: var(--primary-color); }
         <h1 class="main-title">
             <i class="fas fa-book-open"></i> Pustaka Cepat
         </h1>
-        <p class="subtitle">Sistem Peminjaman Buku Sekolah Cepat & Modern</p>
+        <p class="subtitle">Sistem Peminjaman Perpustakaan Lubangsa</p>
     </div>
     
     <div class="floating-search">
