@@ -272,18 +272,8 @@ input[type="text"]#nisInput:focus {
 }
 
 
-.content-header {
-    font-size: 1.4em;
-    font-weight: 700;
-    color: var(--text-dark); 
-    margin-top: 40px;
-    margin-bottom: 25px;
-    border-left: 5px solid var(--primary-color);
-    padding: 0 0 0 15px;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
+/* HAPUS .content-header */
+
 .warning-box {
     padding: 18px; 
     background:#fff7ec; 
@@ -302,16 +292,8 @@ input[type="text"]#nisInput:focus {
     font-weight: 700;
 }
 
-/* Pinjam Input Wrapper */
-#pinjam-view {
-    padding: 25px;
-    border: 2px dashed var(--border-light);
-    border-radius: 12px;
-    background: var(--background-dark);
-}
-#pinjam-view.hidden {
-    display: none;
-}
+/* HAPUS #pinjam-view */
+
 input[type="text"]:not(#nisInput) {
     width: 100%;
     padding: 14px;
@@ -495,6 +477,55 @@ td:first-child { font-weight: 700; color: var(--primary-color); }
     background: #7f8c8d;
 }
 
+/* --- TOAST NOTIFICATION (BARU) --- */
+#toastContainer {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1300;
+    display: flex;
+    flex-direction: column-reverse; /* Tumpukan notifikasi dari bawah */
+    align-items: center;
+    pointer-events: none; /* Agar tidak menghalangi klik */
+}
+
+.toast {
+    background: rgba(44, 62, 80, 0.95); /* Darker background */
+    color: #fff;
+    padding: 15px 25px;
+    border-radius: 8px;
+    margin-top: 10px;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+    opacity: 0;
+    transform: translateY(20px);
+    transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
+    font-size: 0.95em;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    pointer-events: auto; /* Aktifkan pointer events untuk toast itu sendiri */
+}
+
+.toast.success {
+    background: rgba(39, 174, 96, 0.95); /* Green success */
+}
+.toast.error {
+    background: rgba(231, 76, 60, 0.95); /* Red error */
+}
+.toast.info {
+    background: rgba(0, 139, 139, 0.95); /* Dark Cyan info */
+}
+.toast-icon {
+    font-size: 1.2em;
+}
+.toast.show {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+
 /* --- ANIMASI KEYFRAMES --- */
 @keyframes modalSlideIn {
     from { opacity: 0; transform: translateY(-50px); }
@@ -579,6 +610,8 @@ td:first-child { font-weight: 700; color: var(--primary-color); }
     </div>
 </div>
 
+<div id="toastContainer"></div>
+
 <script>
 // --- KONFIGURASI FIREBASE ---
 const firebaseConfig = {
@@ -604,7 +637,8 @@ const DOM = {
     popup: document.getElementById('popup'),
     popupMsg: document.getElementById('popupMessage'),
     popupBtn: document.getElementById('popupOk'),
-    nisInputWrapper: document.getElementById('nisInputWrapper')
+    nisInputWrapper: document.getElementById('nisInputWrapper'),
+    toastContainer: document.getElementById('toastContainer')
 };
 
 // --- STATE GLOBAL ---
@@ -614,14 +648,71 @@ let dataBuku = {};
 
 // --- HELPER FUNCTIONS ---
 
+// NEW: Fungsi untuk menampilkan notifikasi Toast
+function showToast(msg, type = 'info', duration = 3000) {
+    const toast = document.createElement('div');
+    
+    let iconClass = 'fas fa-info-circle';
+    if (type === 'success') iconClass = 'fas fa-check-circle';
+    if (type === 'error') iconClass = 'fas fa-times-circle';
+
+    toast.className = 'toast ' + type;
+    // Ganti markdown bold menjadi tag strong
+    const processedMsg = msg.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+    toast.innerHTML = `<i class="${iconClass} toast-icon"></i> ${processedMsg}`;
+
+    DOM.toastContainer.appendChild(toast);
+    
+    // Tampilkan Toast
+    setTimeout(() => {
+        toast.classList.add('show');
+    }, 10);
+
+    // Sembunyikan dan hapus Toast setelah durasi
+    setTimeout(() => {
+        toast.classList.remove('show');
+        toast.style.opacity = '0';
+        setTimeout(() => {
+            toast.remove();
+        }, 500); // Tunggu transisi selesai
+    }, duration);
+}
+
 // MODIFIKASI: Mengubah showPopup agar bisa menerima tombol Batal/Konfirmasi (actionMode)
-function showPopup(msg, callbackOk = null, callbackCancel = null, actionBtnText = 'Tutup', actionMode = 'alert') {
+function showPopup(msg, callbackOk = null, callbackCancel = null, actionBtnText = 'Tutup', actionMode = 'alert', popupType = 'info') {
+    
+    // JIKA MODE ADALAH ALERT (Pesan Sederhana), MAKA GUNAKAN TOAST
+    if (actionMode === 'alert') {
+        let type = 'info';
+        if (msg.toLowerCase().includes('berhasil') || msg.toLowerCase().includes('sukses') || msg.includes('✅') || msg.includes('🎉')) {
+            type = 'success';
+        } else if (msg.toLowerCase().includes('gagal') || msg.toLowerCase().includes('tidak ditemukan') || msg.toLowerCase().includes('error')) {
+            type = 'error';
+        }
+        showToast(msg, type);
+        
+        // Panggil callbackOk jika ada, karena ini adalah pop-up non-interaktif yang langsung ditutup.
+        if (callbackOk) callbackOk(); 
+        return;
+    }
+    
+    // LOGIKA DI BAWAH INI HANYA BERJALAN JIKA actionMode === 'confirm' (Konfirmasi/Blocking)
     DOM.popupMsg.innerHTML = msg; 
     DOM.popup.style.display = 'flex';
     DOM.popup.querySelector('.popup').style.animation = 'popIn 0.3s forwards cubic-bezier(0.17, 0.84, 0.44, 1)';
     
     const popupBtn = DOM.popupBtn;
     const popupCancelBtn = document.getElementById('popupCancel');
+
+    // Set Popup Icon based on type
+    const popupIcon = DOM.popup.querySelector('i');
+    if (popupType === 'danger') {
+        popupIcon.className = 'fas fa-exclamation-triangle';
+        popupIcon.style.color = 'var(--danger-color)';
+    } else {
+        popupIcon.className = 'fas fa-info-circle';
+        popupIcon.style.color = 'var(--primary-color)';
+    }
 
     // Mengatur tombol Batal dan Konfirmasi
     if (actionMode === 'confirm') {
@@ -630,10 +721,10 @@ function showPopup(msg, callbackOk = null, callbackCancel = null, actionBtnText 
         popupBtn.innerText = actionBtnText; // Biasanya 'Ya, Konfirmasi'
         popupCancelBtn.innerText = 'Batal';
     } else {
-        // Mode default 'alert'
+        // Mode default 'alert' (seharusnya sudah di-handle Toast di atas)
         popupBtn.style.display = 'inline-block';
         popupCancelBtn.style.display = 'none';
-        popupBtn.innerText = actionBtnText; // Biasanya 'Tutup'
+        popupBtn.innerText = actionBtnText;
     }
 
     // Fungsi menutup pop-up
@@ -852,19 +943,20 @@ function tampilkanProfil(peminjamanData) {
         </div>
     `;
     
-    // --- 2. RENDER BODY MODAL (BUKU DIPINJAM) ---
+    // --- 2. RENDER BODY MODAL SESUAI STATUS PEMINJAMAN ---
     let bodyContent = ``;
 
     if (isMeminjam) {
+        // --- ANGGOTA SEDANG MEMINJAM: Tampilkan HANYA Tabel Buku Dipinjam ---
+        
         bodyContent += `
-            <h3 class="content-header"><i class="fas fa-book-reader"></i> Daftar Buku Dipinjam</h3>
-            <div class="table-responsive">
+            <div class="table-responsive" style="margin-top: 20px;">
                 <table>
                     <thead>
                         <tr>
                             <th>Kode</th>
                             <th>Judul</th>
-                            <th>Jatuh Tempo</th>
+                            <th>Harus Kembali</th>
                             <th>Denda</th>
                             <th style="min-width: 180px;">Aksi</th>
                         </tr>
@@ -889,8 +981,6 @@ function tampilkanProfil(peminjamanData) {
             const tglKembaliStr = new Date(d.tanggalKembali).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
             const terlambatBadge = keterlambatan > 0 ? `<span style="color:var(--danger-color); font-size:0.8em; display:block; font-weight: 600;">(${keterlambatan} hr terlambat)</span>` : '';
             const dendaStyle = denda > 0 ? 'color:var(--danger-color); font-weight: 700;' : 'color:var(--success-color); font-weight: 600;';
-            
-            // Cek apakah ada denda untuk tombol perpanjang
             const adaDenda = denda > 0;
 
             bodyContent += `
@@ -915,25 +1005,26 @@ function tampilkanProfil(peminjamanData) {
                     </tbody>
                 </table>
             </div>
+            <div class="warning-box"><i class="fas fa-exclamation-circle"></i> Anggota harus mengembalikan buku di atas terlebih dahulu.</div>
+        `;
+        
+    } else {
+        // --- ANGGOTA TIDAK MEMINJAM: Tampilkan HANYA Input Pinjam Buku Baru ---
+        
+        bodyContent += `
+            <div id="pinjam-area">
+                <div class="autocomplete-container" style="margin-bottom: 15px;">
+                    <label for="kodeInput">Masukkan Kode Inventaris / Judul Buku yang akan dipinjam</label>
+                    <input type="text" id="kodeInput" placeholder="Ketik Kode atau Judul Buku" autocomplete="off">
+                    <div id="kodeAutocomplete" class="autocomplete-results" style="display:none;"></div>
+                </div>
+                <button id="pinjamBtn" type="button" style="width:100%;" onclick="handlePinjam()">
+                    <i class="fas fa-book-medical"></i> PINJAM SEKARANG
+                </button>
+            </div>
         `;
     }
 
-    // --- 3. RENDER INPUT PINJAM ---
-    bodyContent += `
-        <h3 class="content-header pinjam"><i class="fas fa-plus-circle"></i> Pinjam Buku Baru</h3>
-        <div id="pinjam-view" class="${isMeminjam ? 'hidden' : ''}">
-            <div class="autocomplete-container" style="margin-bottom: 15px;">
-                <label for="kodeInput">Kode Inventaris / Judul Buku</label>
-                <input type="text" id="kodeInput" placeholder="Ketik Kode atau Judul Buku" autocomplete="off">
-                <div id="kodeAutocomplete" class="autocomplete-results" style="display:none;"></div>
-            </div>
-            <button id="pinjamBtn" type="button" style="width:100%;" onclick="handlePinjam()">
-                <i class="fas fa-book-medical"></i> PINJAM SEKARANG
-            </button>
-        </div>
-        ${isMeminjam ? `<div class="warning-box"><i class="fas fa-exclamation-circle"></i> **TIDAK BISA PINJAM BARU**. Anggota harus mengembalikan buku di atas terlebih dahulu.</div>` : ''}
-    `;
-    
     DOM.modalBody.innerHTML = bodyContent;
     DOM.profilModal.style.display = "flex";
     
@@ -943,7 +1034,7 @@ function tampilkanProfil(peminjamanData) {
         nisAutocompleteEl.style.display = 'none';
     }
     
-    // Setup ulang autocomplete
+    // Setup ulang autocomplete jika tidak meminjam
     if (!isMeminjam) {
         setupAutocomplete('kodeInput', dataBuku, ['kode', 'judul']);
         document.getElementById('kodeInput').focus();
@@ -989,13 +1080,13 @@ function handlePinjam() {
     if (!kode) { showPopup("Masukkan kode inventaris!"); return; }
 
     showLoading(true);
-    closeProfilModal(); 
+    // closeProfilModal(); // BARIS INI DIHAPUS AGAR MODAL TIDAK TERTUTUP PREMATUR
 
     // PATH BARU: peminjaman_v2
     db.ref("peminjaman_v2").orderByChild("kode").equalTo(kode).once("value").then(snapCekPinjam => {
         if (snapCekPinjam.exists()) {
             showLoading(false);
-            showPopup(`Buku dengan kode **${kode}** sedang dipinjam oleh anggota lain!`);
+            showPopup(`Buku dengan kode **${kode}** sedang dipinjam oleh anggota lain!`, null, null, 'Tutup', 'alert');
             return;
         }
 
@@ -1003,7 +1094,7 @@ function handlePinjam() {
         db.ref("buku_v2/" + kode).once("value").then(snapBuku => {
             if (!snapBuku.exists()) {
                 showLoading(false);
-                showPopup(`Buku dengan kode **${kode}** tidak ditemukan!`);
+                showPopup(`Buku dengan kode **${kode}** tidak ditemukan!`, null, null, 'Tutup', 'alert');
                 return;
             }
             
@@ -1034,66 +1125,57 @@ function handlePinjam() {
                 showLoading(false);
                 showPopup(`Peminjaman buku **${bookData.judul}** berhasil! Batas kembali: **${new Date(kembali).toLocaleDateString('id-ID')}**`, () => {
                     muatDipinjam(); 
-                });
+                }, null, 'Tutup', 'alert');
             }).catch(error => {
                 showLoading(false);
-                showPopup("Gagal menyimpan data peminjaman: " + error.message);
+                showPopup("Gagal menyimpan data peminjaman: " + error.message, null, null, 'Tutup', 'alert');
             });
         });
     }).catch(error => {
         showLoading(false);
-        showPopup("Error saat cek pinjam: " + error.message);
+        showPopup("Error saat cek pinjam: " + error.message, null, null, 'Tutup', 'alert');
     });
 }
 
-// Perubahan: Menambahkan konfirmasi untuk Kembalikan (Batal/Konfirmasi)
+// Perubahan: Menggunakan mode 'confirm' untuk Kembalikan
 function kembalikan(key, denda) {
     let msg = "Apakah Anda yakin ingin **mengembalikan** buku ini? Tindakan ini tidak dapat dibatalkan.";
-    let iconColor = 'var(--primary-color)';
+    let popupType = 'info';
 
     if (denda > 0) {
-        msg = `<div style="color: var(--danger-color); font-weight: 600;"><i class="fas fa-exclamation-triangle"></i> Denda: Rp ${denda.toLocaleString('id-ID')}</div><br>Pastikan denda telah dibayar! Konfirmasi **pengembalian buku**?`;
-        iconColor = 'var(--danger-color)';
+        msg = `Denda: **Rp ${denda.toLocaleString('id-ID')}**<br>Pastikan denda telah dibayar! Konfirmasi **pengembalian buku**?`;
+        popupType = 'danger';
     }
-
-    // Set icon color sebelum menampilkan popup
-    DOM.popup.querySelector('i').style.color = iconColor;
 
     // Tampilkan popup konfirmasi
     showPopup(
         msg, 
         // Callback OK: Lanjutkan Pengembalian
         () => {
-            // Reset icon color
-            DOM.popup.querySelector('i').style.color = 'var(--primary-color)';
-            
             showLoading(true);
             // PATH BARU: peminjaman_v2
             db.ref("peminjaman_v2/" + key).remove().then(() => {
                 showLoading(false);
-                showPopup("✅ Buku berhasil dikembalikan.", () => {
+                showPopup("✅ Buku berhasil dikembalikan.", () => { 
                     muatDipinjam(); 
-                });
+                }, null, 'Tutup', 'alert');
             }).catch(error => {
                 showLoading(false);
-                showPopup("Gagal mengembalikan buku: " + error.message);
+                showPopup("Gagal mengembalikan buku: " + error.message, null, null, 'Tutup', 'alert'); 
             });
         }, 
-        // Callback Cancel: Batal (Kembali ke modal profil)
+        // Callback Cancel: Batal (Muat ulang modal profil)
         () => {
-             // Reset icon color
-            DOM.popup.querySelector('i').style.color = 'var(--primary-color)';
-            muatDipinjam(); // Muat ulang/tutup pop-up, kembali ke modal profil
+            muatDipinjam(); 
         },
-        'Ya, Kembalikan', // Action Button Text
-        'confirm' // Action Mode
+        'Ya, Kembalikan', 
+        'confirm', 
+        popupType
     );
 }
 
-// Perubahan: Menambahkan konfirmasi untuk Perpanjang (Batal/Konfirmasi)
+// Perubahan: Menggunakan mode 'confirm' untuk Perpanjang
 function perpanjangBuku(key, adaDenda) {
-    // Pengecekan denda Dihapus. Perpanjangan diizinkan meskipun terlambat.
-
     let msg = `Apakah Anda yakin ingin **memperpanjang** peminjaman buku ini selama 4 hari lagi?`;
     
     // Tampilkan popup konfirmasi
@@ -1115,18 +1197,18 @@ function perpanjangBuku(key, adaDenda) {
                 showLoading(false);
                 showPopup(`🎉 Buku **berhasil diperpanjang**! Tanggal kembali baru: **${new Date(tglKembaliBaruStr).toLocaleDateString('id-ID')}**`, () => {
                     muatDipinjam(); 
-                });
+                }, null, 'Tutup', 'alert');
             }).catch(error => {
                 showLoading(false);
-                showPopup("Gagal memperpanjang buku: " + error.message);
+                showPopup("Gagal memperpanjang buku: " + error.message, null, null, 'Tutup', 'alert');
             });
         }, 
-        // Callback Cancel: Batal (Kembali ke modal profil)
+        // Callback Cancel: Batal (Muat ulang modal profil)
         () => {
-            muatDipinjam(); // Muat ulang/tutup pop-up, kembali ke modal profil
+            muatDipinjam();
         },
-        'Ya, Perpanjang', // Action Button Text
-        'confirm' // Action Mode
+        'Ya, Perpanjang', 
+        'confirm'
     );
 }
 
