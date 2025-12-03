@@ -16,7 +16,7 @@
             --color-text-default: #333333;
             --color-text-inactive: #6c757d;
             --header-height: 60px; 
-            --header-padding-x: 20px; /* Variabel baru untuk padding */
+            --header-padding-x: 20px;
             --transition-duration: 0.3s; 
             --snappy-ease: cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
@@ -50,7 +50,7 @@
             z-index: 100; 
             display: flex;
             align-items: center;
-            padding: 0; /* DIHAPUS: padding horizontal dipindahkan ke dalam nav-group-main */
+            padding: 0; 
             box-sizing: border-box;
         }
         
@@ -59,14 +59,13 @@
             font-weight: 700;
             color: var(--color-text-default);
             margin-right: 30px;
-            padding-left: var(--header-padding-x); /* Tambahkan padding kiri ke judul */
+            padding-left: var(--header-padding-x); 
             white-space: nowrap;
         }
 
         .nav-group-main {
             display: flex;
             align-items: center;
-            /* TAMBAHAN: Padding kiri 20px agar navigasi tidak mepet kiri layar */
             padding-left: var(--header-padding-x); 
         }
         
@@ -207,7 +206,7 @@
         <div id="main-content">
             
             <iframe id="iframe-daftarpeminjam" class="content-frame" data-src="https://perpustakaanlubangsa.github.io/sistempinjam/daftarpeminjam" src="" title="Daftar Peminjam"></iframe>
-            <iframe id="iframe-pinjambaru" class="content-frame" data-src="https://perpustakaanlubangsa.github.io/sistempinjam/pinjam" src="" title="Peminjaman Baru"></iframe>
+            <iframe id="iframe-pinjambaru" class="content-frame" data-src="https://perpustakaanlubangsa.github.io/tutup/peminjaman" src="" title="Peminjaman Baru"></iframe>
             <iframe id="iframe-keterlambatan" class="content-frame" data-src="https://perpustakaanlubangsa.github.io/sistempinjam/daftarketerlambatan" src="" title="Daftar Keterlambatan"></iframe>
             <iframe id="iframe-buku" class="content-frame" data-src="https://perpustakaanlubangsa.github.io/sistempinjam/buku" src="" title="Manajemen Buku"></iframe>
             <iframe id="iframe-keanggotaan" class="content-frame" data-src="https://perpustakaanlubangsa.github.io/sistempinjam/keanggotaan" src="" title="Manajemen Anggota"></iframe>
@@ -287,7 +286,7 @@
             const defaultActiveIcon = document.querySelector('[data-target="iframe-daftarpeminjam"]');
             
             if (defaultActiveIcon) {
-                 activateNavigation(defaultActiveIcon);
+                activateNavigation(defaultActiveIcon);
             }
         });
     </script>
