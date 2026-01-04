@@ -49,16 +49,16 @@
 
         .card {
             background: rgba(255, 255, 255, 0.08);
-            backdrop-filter: blur(15px);
-            -webkit-backdrop-filter: blur(15px);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
             width: 100%;
             max-width: 480px;
-            max-height: 90vh; 
+            max-height: 85vh; 
             display: flex;
             flex-direction: column;
             border-radius: 25px;
             border: 1px solid rgba(255, 255, 255, 0.15);
-            box-shadow: 0 0 50px rgba(0, 162, 255, 0.1);
+            box-shadow: 0 0 50px rgba(0, 162, 255, 0.15);
             z-index: 2;
             overflow: hidden;
         }
@@ -85,13 +85,21 @@
             width: 6px;
         }
 
-        .scrollable-content::-webkit-scrollbar-track {
-            background: rgba(255,255,255,0.05);
-        }
-
         .scrollable-content::-webkit-scrollbar-thumb {
             background-color: #a1c4fd;
             border-radius: 10px;
+        }
+
+        .return-notice {
+            background: rgba(0, 162, 255, 0.15);
+            border: 1px solid #a1c4fd;
+            padding: 15px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            text-align: center;
+            color: #ffffff;
+            font-size: 0.95rem;
+            line-height: 1.4;
         }
 
         .login-box {
@@ -114,7 +122,6 @@
             font-weight: bold;
             display: block;
             margin-bottom: 8px;
-            word-break: break-all;
         }
 
         .step-title {
@@ -163,7 +170,7 @@
             text-align: center;
             color: rgba(255, 255, 255, 0.4);
             font-size: 0.75rem;
-            background: rgba(0, 0, 0, 0.2);
+            background: rgba(0, 0, 0, 0.3);
         }
     </style>
 </head>
@@ -173,33 +180,37 @@
 
     <div class="card">
         <div class="ice-banner">
-            ❄️ Peminjaman Buku Kini Harus Pakai Aplikasi
+            ❄️ Update Sistem Perpustakaan. Sietem Peminjaman Buku Di Alihkan Ke Aplikasi
         </div>
 
         <div class="scrollable-content">
-            <div class="login-box">
-                <p>Username:</p>
-                <code>perpustakaan</code>
-                <p>Password:</p>
-                <code>annuqayahlubangsa</code>
+            <div class="return-notice">
+                Untuk <strong>Pengembalian Buku</strong> tetap menggunakan website ini.
+                <p style="font-size: 0.8rem; margin-top: 8px; color: #d1d9e6;">
+                    Jika data buku tidak ditemukan di sini, maka pasti ada di aplikasi.
+                </p>
             </div>
 
-            <h3 class="step-title">📍 Alur Sirkulasi</h3>
+            <div class="login-box">
+                <p>Akses Login Aplikasi:</p>
+                <code>User: perpustakaan</code>
+                <code>Pass: annuqayahlubangsa</code>
+            </div>
+
+            <h3 class="step-title"> Alur Sirkulasi Aplikasi</h3>
             <ul class="instruction-list">
                 <li>Buka menu <span class="highlight">Sirkulasi</span>.</li>
                 <li>Ketik nama anggota.</li>
-                <li>Cari nama buku yang diinginkan.</li>
-                <li>Pastikan sesuai <span class="highlight">NIS</span> & <span class="highlight">Kode Ekslempar</span>.</li>
+                <li>Cari nama buku, pastikan sesuai <span class="highlight">NIS</span> & <span class="highlight">Kode Ekslempar</span>.</li>
             </ul>
 
             <div class="warning-zone">
-                <strong>⚠️ Jika Buku Tidak Ditemukan:</strong>
+                <strong>⚠️ Jika Buku Tidak Ada di Aplikasi:</strong>
                 <ul class="instruction-list" style="font-size: 0.85rem; border-left: none;">
-                    <li>1. Ke menu <span class="highlight">Bibliografi</span> (sidebar).</li>
-                    <li>2. Cari judul & klik bukunya.</li>
-                    <li>3. Scroll ke paling bawah.</li>
-                    <li>4. Klik tombol <span class="highlight">+Ekslempar</span> (kanan).</li>
-                    <li>5. Isi <span class="highlight">Kode Ekslempar</span> & <span class="highlight">Lokasi Rak</span> saja.</li>
+                    <li>1. Masuk menu <span class="highlight">Bibliografi</span>.</li>
+                    <li>2. Klik Judul Buku → Scroll ke bawah.</li>
+                    <li>3. Klik <span class="highlight">+Ekslempar</span> (sisi kanan).</li>
+                    <li>4. Isi <span class="highlight">Kode Ekslempar</span> & <span class="highlight">Lokasi Rak</span>.</li>
                 </ul>
             </div>
         </div>
@@ -213,14 +224,12 @@
         function createSnowflake() {
             const snow = document.getElementById('snow');
             const flake = document.createElement('div');
-            
             flake.classList.add('snowflake');
             flake.innerText = '•';
             flake.style.left = Math.random() * 100 + 'vw';
             flake.style.opacity = Math.random();
             flake.style.fontSize = Math.random() * 10 + 10 + 'px';
             flake.style.animationDuration = Math.random() * 3 + 2 + 's';
-            
             snow.appendChild(flake);
             setTimeout(() => { flake.remove(); }, 5000);
         }
@@ -228,3 +237,4 @@
     </script>
 </body>
 </html>
+
